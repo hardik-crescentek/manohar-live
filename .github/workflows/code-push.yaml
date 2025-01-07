@@ -1,0 +1,26 @@
+name: Deploy to Shared Hosting
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: 45.76.134.183
+          username: faruk
+          password: 1c!Y3S5E!4$w
+          port: 22
+          script: |
+            cd /home/1098524.cloudwaysapps.com/ytcatbavac/public_html
+            git pull origin main
