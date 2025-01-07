@@ -9,7 +9,7 @@ $routeName = request()->route()->getName();
             <img src="{{ URL::asset('assets/img/brand/icon-light.png') }}" class="header-brand-img icon-logo" alt="logo">
             <img src="{{ URL::asset('assets/img/brand/logo.png') }}" class="header-brand-img desktop-logo theme-logo" alt="logo">
             <img src="{{ URL::asset('assets/img/brand/icon.png') }}" class="header-brand-img icon-logo theme-logo" alt="logo"> -->
-            Manohar Farms
+            Manohar Farms Test
         </a>
     </div>
     <div class="main-sidebar-body">
