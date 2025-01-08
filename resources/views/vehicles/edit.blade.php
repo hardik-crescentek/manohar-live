@@ -86,26 +86,6 @@
                                     @enderror
                                 </div>
                             </div>
-<<<<<<< HEAD
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Service Cycle Type</label>
-                                <!-- <select class="form-control select2" name="service_cycle_type" id="service_cycle_type" value="{{ old('service_cycle_type', $vehicle->service_cycle_type) }}">
-                                    <option value="">Select Service Types</option>
-                                    <option value="1">Day</option>
-                                    <option value="2">Hours</option>
-                                </select> -->
-                                <select class="form-control select2" name="service_cycle_type" id="service_cycle_type">
-                                    <option value="">Select Service Types</option>
-                                    @if(isset($serviceTypes) && !empty($serviceTypes))
-                                        @foreach($serviceTypes as $id => $name)
-                                            <option value="{{ $id }}" {{ $vehicle->service_cycle_type != null && $vehicle->service_cycle_type == $id ? 'selected' : '' }}>{{ $name }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                @error('land_id') <ul class="parsley-errors-list filled"> <li class="parsley-required">{{ $message }}</li> </ul> @enderror
-=======
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Service Cycle Type</label>
@@ -130,7 +110,6 @@
                                         </ul>
                                     @enderror
                                 </div>
->>>>>>> 7657996455211a920193c7366507a817f7e77660
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
