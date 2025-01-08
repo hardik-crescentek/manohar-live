@@ -245,7 +245,7 @@ class ReportsController extends Controller
             ])->reduce(fn($carry, $item) => $carry + $item, 0);
 
             // Format total expenses for the current month
-            $data['totalExpenses'] = number_format($totalExpenses, 2);
+            $data['systemtotalMontlyExpenses'] = number_format($totalExpenses, 2);
 
 
             return response()->json(['status' => 200, 'data' => $data], 200);
