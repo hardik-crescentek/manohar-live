@@ -4,15 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bill;
+use App\Models\Camera;
 use App\Models\Diesel;
 use App\Models\DieselEntry;
 use App\Models\Expense;
 use App\Models\FertilizerPesticide;
+use App\Models\Infrastructure;
 use App\Models\Land;
 use App\Models\LandPart;
 use App\Models\Plant;
 use App\Models\Staff;
 use App\Models\Vehicle;
+use App\Models\VehicleService;
 use App\Models\Water;
 use PDF;
 use Illuminate\Http\Request;
@@ -21,7 +24,8 @@ use Illuminate\Support\Facades\DB;
 
 class ReportsController extends Controller
 {
-    public function getReport() {
+    public function getReport()
+    {
 
         try {
             $current = Carbon::now();
@@ -123,27 +127,27 @@ class ReportsController extends Controller
             $staff['totalStaff'] = number_format($totalStaffExpense, 0);
 
             $currentMonthStaffQuery = Staff::whereDate('joining_date', '<=', now())
-                        ->where(function ($query) {
-                            $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now());
-                        })
-                        ->select(DB::raw('SUM(COALESCE(salary, 0) + COALESCE(rate_per_day, 0)) AS total_salary'))
-                        ->first();
+                ->where(function ($query) {
+                    $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now());
+                })
+                ->select(DB::raw('SUM(COALESCE(salary, 0) + COALESCE(rate_per_day, 0)) AS total_salary'))
+                ->first();
             $currentMonthTotalSalary = $currentMonthStaffQuery->total_salary ?? 0;
 
             $prevMonthStaffQuery = Staff::whereMonth('joining_date', '<=', $prevMonth)
-                        ->where(function ($query) use ($prevMonth) {
-                            $query->whereNull('resign_date')->orWhereMonth('resign_date', '>=', $prevMonth);
-                        })
-                        ->select(DB::raw('SUM(COALESCE(salary, 0) + COALESCE(rate_per_day, 0)) AS total_salary'))
-                        ->first();
+                ->where(function ($query) use ($prevMonth) {
+                    $query->whereNull('resign_date')->orWhereMonth('resign_date', '>=', $prevMonth);
+                })
+                ->select(DB::raw('SUM(COALESCE(salary, 0) + COALESCE(rate_per_day, 0)) AS total_salary'))
+                ->first();
             $prevMonthTotalSalary = $prevMonthStaffQuery->total_salary ?? 0;
 
             $currentYearStaffQuery = Staff::whereYear('joining_date', '<=', date('Y'))
-                            ->where(function ($query) {
-                                $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now());
-                            })
-                            ->select(DB::raw('SUM(COALESCE(salary, 0) + COALESCE(rate_per_day, 0)) AS total_salary'))
-                            ->first();
+                ->where(function ($query) {
+                    $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now());
+                })
+                ->select(DB::raw('SUM(COALESCE(salary, 0) + COALESCE(rate_per_day, 0)) AS total_salary'))
+                ->first();
             $currentYearStaff = $currentYearStaffQuery->total_salary ?? 0;
 
             $staff['currentMonthStaff'] = number_format($currentMonthTotalSalary, 0);
@@ -177,7 +181,8 @@ class ReportsController extends Controller
         }
     }
 
-    public function getHomeReport(Request $request) {
+    public function getHomeReport(Request $request)
+    {
 
         try {
             $totalExpense = Expense::sum('amount');
@@ -220,13 +225,37 @@ class ReportsController extends Controller
             $totalOndemandStaffExpense = Staff::where('type', 2)->sum('rate_per_day');
             $data['totalOndemandStaffExpense'] = number_format($totalOndemandStaffExpense, 0);
 
+            // Get current month and year
+            $currentYear = date('Y');
+            $currentMonth = date('m');
+
+            // Calculate total expenses for the current month dynamically
+            $totalExpenses = collect([
+                Plant::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('price'),
+                FertilizerPesticide::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('price'),
+                Staff::sum('salary'), // Staff salaries may not be monthly, adjust if necessary
+                VehicleService::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('price'),
+                Diesel::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('total_price'),
+                DieselEntry::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
+                Water::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('price'),
+                Bill::where('status', 'paid')->whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
+                Expense::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
+                Infrastructure::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
+                Camera::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
+            ])->reduce(fn($carry, $item) => $carry + $item, 0);
+
+            // Format total expenses for the current month
+            $data['totalExpenses'] = number_format($totalExpenses, 2);
+
+
             return response()->json(['status' => 200, 'data' => $data], 200);
         } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getExpensesReport(Request $request) {
+    public function getExpensesReport(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -244,12 +273,13 @@ class ReportsController extends Controller
             $data['expenses'] = $expenses;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getExpensesPdf(Request $request) {
+    public function getExpensesPdf(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -275,20 +305,21 @@ class ReportsController extends Controller
             $pdfData['expenses'] = $expenses;
 
             $pdf = PDF::loadView('reports.Pdf.expenses', $pdfData);
-            $fileName = time().'_expenses_report.pdf';
-            $path = public_path('reports/'.$fileName);
+            $fileName = time() . '_expenses_report.pdf';
+            $path = public_path('reports/' . $fileName);
             $pdf->save($path);
 
-            $url = url('reports/'.$fileName);
+            $url = url('reports/' . $fileName);
             $data['url'] = $url;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getWaterReport(Request $request) {
+    public function getWaterReport(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -310,12 +341,13 @@ class ReportsController extends Controller
             $data['water'] = $water;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getWaterPdf(Request $request) {
+    public function getWaterPdf(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -348,20 +380,21 @@ class ReportsController extends Controller
             $pdfData['water'] = $water;
 
             $pdf = PDF::loadView('reports.Pdf.water', $pdfData);
-            $fileName = time().'_water_report.pdf';
-            $path = public_path('reports/'.$fileName);
+            $fileName = time() . '_water_report.pdf';
+            $path = public_path('reports/' . $fileName);
             $pdf->save($path);
 
-            $url = url('reports/'.$fileName);
+            $url = url('reports/' . $fileName);
             $data['url'] = $url;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getDieselReport(Request $request) {
+    public function getDieselReport(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -383,12 +416,13 @@ class ReportsController extends Controller
             $data['diesel'] = $diesel;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getDieselPdf(Request $request) {
+    public function getDieselPdf(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -420,20 +454,21 @@ class ReportsController extends Controller
             $pdfData['diesel'] = $diesel;
 
             $pdf = PDF::loadView('reports.Pdf.diesel', $pdfData);
-            $fileName = time().'_diesel_report.pdf';
-            $path = public_path('reports/'.$fileName);
+            $fileName = time() . '_diesel_report.pdf';
+            $path = public_path('reports/' . $fileName);
             $pdf->save($path);
 
-            $url = url('reports/'.$fileName);
+            $url = url('reports/' . $fileName);
             $data['url'] = $url;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getBillReport(Request $request) {
+    public function getBillReport(Request $request)
+    {
 
         try {
             $startDate = $request->startDate;
@@ -455,12 +490,13 @@ class ReportsController extends Controller
             $data['bills'] = $bills;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getBillPdf(Request $request) {
+    public function getBillPdf(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -492,20 +528,21 @@ class ReportsController extends Controller
             $pdfData['bills'] = $bills;
 
             $pdf = PDF::loadView('reports.Pdf.bill', $pdfData);
-            $fileName = time().'_bill_report.pdf';
-            $path = public_path('reports/'.$fileName);
+            $fileName = time() . '_bill_report.pdf';
+            $path = public_path('reports/' . $fileName);
             $pdf->save($path);
 
-            $url = url('reports/'.$fileName);
+            $url = url('reports/' . $fileName);
             $data['url'] = $url;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getPlantsReport(Request $request) {
+    public function getPlantsReport(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -522,12 +559,13 @@ class ReportsController extends Controller
             $data['plants'] = $plants;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getPlantsPdf(Request $request) {
+    public function getPlantsPdf(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -552,20 +590,21 @@ class ReportsController extends Controller
             $pdfData['plants'] = $plants;
 
             $pdf = PDF::loadView('reports.Pdf.plant', $pdfData);
-            $fileName = time().'_plants_report.pdf';
-            $path = public_path('reports/'.$fileName);
+            $fileName = time() . '_plants_report.pdf';
+            $path = public_path('reports/' . $fileName);
             $pdf->save($path);
 
-            $url = url('reports/'.$fileName);
+            $url = url('reports/' . $fileName);
             $data['url'] = $url;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getStaffsReport(Request $request) {
+    public function getStaffsReport(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -586,7 +625,7 @@ class ReportsController extends Controller
                 });
             }
 
-            if($request->type != null) {
+            if ($request->type != null) {
                 $query->where('type', $request->type);
             }
 
@@ -594,12 +633,13 @@ class ReportsController extends Controller
             $data['staff'] = $staff;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getStaffsPdf(Request $request) {
+    public function getStaffsPdf(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -623,13 +663,13 @@ class ReportsController extends Controller
                 $pdfData['to'] = date('d-m-Y', strtotime($endDate));
             }
 
-            if($request->type == 1 || $request->type == 2) {
+            if ($request->type == 1 || $request->type == 2) {
                 $query->where('type', $request->type);
 
-                if($request->type == 1) {
+                if ($request->type == 1) {
                     $pdfData['type'] = 'Salaried';
-                } 
-                if($request->type == 2) {
+                }
+                if ($request->type == 2) {
                     $pdfData['type'] = 'On-demand';
                 }
             }
@@ -643,20 +683,21 @@ class ReportsController extends Controller
             $pdfData['staffs'] = $staff;
 
             $pdf = PDF::loadView('reports.Pdf.staffs', $pdfData);
-            $fileName = time().'_staff_report.pdf';
-            $path = public_path('reports/'.$fileName);
+            $fileName = time() . '_staff_report.pdf';
+            $path = public_path('reports/' . $fileName);
             $pdf->save($path);
 
-            $url = url('reports/'.$fileName);
+            $url = url('reports/' . $fileName);
             $data['url'] = $url;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getFertilizerReport(Request $request) {
+    public function getFertilizerReport(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -673,12 +714,13 @@ class ReportsController extends Controller
             $data['fertilizers'] = $fertilizers;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getFertilizerPdf(Request $request) {
+    public function getFertilizerPdf(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -703,20 +745,21 @@ class ReportsController extends Controller
             $pdfData['fertilizerPesticides'] = $fertilizerPesticides;
 
             $pdf = PDF::loadView('reports.Pdf.fertilizer-pesticides', $pdfData);
-            $fileName = time().'_fertilizer_report.pdf';
-            $path = public_path('reports/'.$fileName);
+            $fileName = time() . '_fertilizer_report.pdf';
+            $path = public_path('reports/' . $fileName);
             $pdf->save($path);
 
-            $url = url('reports/'.$fileName);
+            $url = url('reports/' . $fileName);
             $data['url'] = $url;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getDieselManagementReport(Request $request) {
+    public function getDieselManagementReport(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -734,12 +777,13 @@ class ReportsController extends Controller
             $data['diesels'] = $diesels;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
 
-    public function getDieselManagementPdf(Request $request) {
+    public function getDieselManagementPdf(Request $request)
+    {
 
         try {
             $startDate = $request->start_date;
@@ -765,15 +809,15 @@ class ReportsController extends Controller
             $pdfData['diesels'] = $diesels;
 
             $pdf = PDF::loadView('reports.Pdf.diesel-management', $pdfData);
-            $fileName = time().'_diesel_report.pdf';
-            $path = public_path('reports/'.$fileName);
+            $fileName = time() . '_diesel_report.pdf';
+            $path = public_path('reports/' . $fileName);
             $pdf->save($path);
 
-            $url = url('reports/'.$fileName);
+            $url = url('reports/' . $fileName);
             $data['url'] = $url;
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
