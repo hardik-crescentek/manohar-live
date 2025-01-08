@@ -52,37 +52,36 @@ class JivamrutEntryController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-            'land_id' => 'required',
-            'land_part_id' => 'required',
-            'date' => 'required',
-            'time' => 'required',
+                'land_id' => 'required',
+                'land_part_id' => 'required',
+                'date' => 'required',
+                'time' => 'required',
             ]);
 
             if ($validator->fails()) {
                 throw new \Exception($validator->errors()->first());
             }
 
-        // Find the JivamrutEntry by id
+            // Find the JivamrutEntry by id
             $jivamrutEntry = JivamrutEntry::find($id);
 
             if (!$jivamrutEntry) {
                 throw new \Exception('Jivamrut Entry not found!');
             }
 
-        // Update the entry
-        $jivamrutEntry->update([
-            'land_id' => $request->land_id,
-            'land_part_id' => $request->land_part_id,
-            'date' => date('Y-m-d', strtotime($request->date)),
-            'time' => date('H:i:s', strtotime($request->time)),
-            'qty' => $request->qty,
-            'remarks' => $request->remarks,
-        ]);
+            // Update the entry
+            $jivamrutEntry->update([
+                'land_id' => $request->land_id,
+                'land_part_id' => $request->land_part_id,
+                'date' => date('Y-m-d', strtotime($request->date)),
+                'time' => date('H:i:s', strtotime($request->time)),
+                'qty' => $request->qty,
+                'remarks' => $request->remarks,
+            ]);
 
-        return response()->json(['status' => 200, 'message' => 'Jivamrut Entry updated successfully!', 'data' => $jivamrutEntry], 200);
-
+            return response()->json(['status' => 200, 'message' => 'Jivamrut Entry updated successfully!', 'data' => $jivamrutEntry], 200);
         } catch (\Exception $e) {
-        return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
+            return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
         }
     }
 
@@ -91,8 +90,9 @@ class JivamrutEntryController extends Controller
     {
 
         try {
+
             $jivamrutEntries = JivamrutEntry::whereJsonContains('land_part_id', $id)->orderBy('id', 'desc')->get();
-            dd($id,$jivamrutEntries);
+            dd($id, $jivamrutEntries);
             return response()->json(['status' => 200, 'data' => $jivamrutEntries], 200);
         } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
