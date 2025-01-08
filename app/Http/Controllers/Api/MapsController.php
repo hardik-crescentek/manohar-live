@@ -92,56 +92,58 @@ class MapsController extends Controller
     //     }
     // }
 
-    public function getLatestOpenValve($id)
+    public function getLatestOpenValve()
     {
         try {
-            $land = Land::find($id);
-            if (!$land) {
-                return response()->json([
-                    'status' => 404,
-                    'message' => 'Land not found.',
-                    'data' => null,
-                ], 404);
+            // Fetch all lands
+            $lands = Land::all();
+
+            // Initialize an array to store land data
+            $landData = [];
+
+            foreach ($lands as $land) {
+                // Latest entries for the current land
+                $latestWaterEntry = WaterEntry::where('land_id', $land->id)->orderBy('created_at', 'desc')->first();
+                $latestJivamrutEntry = JivamrutEntry::where('land_id', $land->id)->orderBy('created_at', 'desc')->first();
+                $latestFertilizerEntry = FertilizerEntry::where('land_id', $land->id)->orderBy('created_at', 'desc')->first();
+
+                // Collect latest entries with land part names
+                $latestEntries = collect([
+                    [
+                        'type' => 'WaterEntry',
+                        'entry' => $latestWaterEntry,
+                        'landParts' => $latestWaterEntry ? $this->getLandPartNames($latestWaterEntry->land_part_id) : 'N/A',
+                        'time' => $latestWaterEntry && $latestWaterEntry->time ? Carbon::parse($latestWaterEntry->time)->format('H:i:s') : 'N/A',
+                        'date' => $latestWaterEntry && $latestWaterEntry->date ? Carbon::parse($latestWaterEntry->date)->format('Y-m-d') : 'N/A',
+                    ],
+                    [
+                        'type' => 'JivamrutEntry',
+                        'entry' => $latestJivamrutEntry,
+                        'landParts' => $latestJivamrutEntry ? $this->getLandPartNames($latestJivamrutEntry->land_part_id) : 'N/A',
+                        'time' => $latestJivamrutEntry && $latestJivamrutEntry->time ? Carbon::parse($latestJivamrutEntry->time)->format('H:i:s') : 'N/A',
+                        'date' => $latestJivamrutEntry && $latestJivamrutEntry->date ? Carbon::parse($latestJivamrutEntry->date)->format('Y-m-d') : 'N/A',
+                    ],
+                    [
+                        'type' => 'FertilizerEntry',
+                        'entry' => $latestFertilizerEntry,
+                        'landParts' => $latestFertilizerEntry ? $this->getLandPartNames($latestFertilizerEntry->land_part_id) : 'N/A',
+                        'time' => $latestFertilizerEntry && $latestFertilizerEntry->time ? Carbon::parse($latestFertilizerEntry->time)->format('H:i:s') : 'N/A',
+                        'date' => $latestFertilizerEntry && $latestFertilizerEntry->date ? Carbon::parse($latestFertilizerEntry->date)->format('Y-m-d') : 'N/A',
+                    ],
+                ])->toArray();
+
+                // Add data for the current land
+                $landData[] = [
+                    'land' => $land,
+                    'latestEntries' => $latestEntries,
+                ];
             }
-
-            // Latest entries
-            $latestWaterEntry = WaterEntry::where('land_id', $id)->orderBy('created_at', 'desc')->first();
-            $latestJivamrutEntry = JivamrutEntry::where('land_id', $id)->orderBy('created_at', 'desc')->first();
-            $latestFertilizerEntry = FertilizerEntry::where('land_id', $id)->orderBy('created_at', 'desc')->first();
-
-            // Latest entries with land part names
-            $latestEntries = collect([
-                [
-                    'type' => 'WaterEntry',
-                    'entry' => $latestWaterEntry,
-                    'landParts' => $latestWaterEntry ? $this->getLandPartNames($latestWaterEntry->land_part_id) : 'N/A',
-                    'time' => $latestWaterEntry && $latestWaterEntry->time ? Carbon::parse($latestWaterEntry->time)->format('H:i:s') : 'N/A',
-                    'date' => $latestWaterEntry && $latestWaterEntry->date ? Carbon::parse($latestWaterEntry->date)->format('Y-m-d') : 'N/A',
-                ],
-                [
-                    'type' => 'JivamrutEntry',
-                    'entry' => $latestJivamrutEntry,
-                    'landParts' => $latestJivamrutEntry ? $this->getLandPartNames($latestJivamrutEntry->land_part_id) : 'N/A',
-                    'time' => $latestJivamrutEntry && $latestJivamrutEntry->time ? Carbon::parse($latestJivamrutEntry->time)->format('H:i:s') : 'N/A',
-                    'date' => $latestJivamrutEntry && $latestJivamrutEntry->date ? Carbon::parse($latestJivamrutEntry->date)->format('Y-m-d') : 'N/A',
-                ],
-                [
-                    'type' => 'FertilizerEntry',
-                    'entry' => $latestFertilizerEntry,
-                    'landParts' => $latestFertilizerEntry ? $this->getLandPartNames($latestFertilizerEntry->land_part_id) : 'N/A',
-                    'time' => $latestFertilizerEntry && $latestFertilizerEntry->time ? Carbon::parse($latestFertilizerEntry->time)->format('H:i:s') : 'N/A',
-                    'date' => $latestFertilizerEntry && $latestFertilizerEntry->date ? Carbon::parse($latestFertilizerEntry->date)->format('Y-m-d') : 'N/A',
-                ],
-            ])->toArray();
 
             // Prepare the final API response
             return response()->json([
                 'status' => 200,
-                'message' => 'Land map data fetched successfully.',
-                'data' => [
-                    'land' => $land,
-                    'latestEntries' => $latestEntries,
-                ]
+                'message' => 'All land map data fetched successfully.',
+                'data' => $landData,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -151,6 +153,7 @@ class MapsController extends Controller
             ], 500);
         }
     }
+
 
     private function getLandPartNames($landPartIds)
     {
