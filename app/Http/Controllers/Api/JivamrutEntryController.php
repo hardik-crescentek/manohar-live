@@ -92,6 +92,7 @@ class JivamrutEntryController extends Controller
 
         try {
             $jivamrutEntries = JivamrutEntry::whereJsonContains('land_part_id', $id)->orderBy('id', 'desc')->get();
+            dd($id,$jivamrutEntries);
             return response()->json(['status' => 200, 'data' => $jivamrutEntries], 200);
         } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
