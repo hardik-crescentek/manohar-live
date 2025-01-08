@@ -76,6 +76,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::get('reports/get-report', [ReportsController::class, 'getReport']);
     Route::get('reports/get-home-report', [ReportsController::class, 'getHomeReport']);
+
+    // Total System Expenses
+
+    Route::post('reports/get-total-expenses-report', [ReportsController::class, 'getTotalExpanseReport']);
+    Route::post('reports/get-total-expenses-pdf', [ReportsController::class, 'getTotalExpansesPdf']);
+
     Route::post('reports/get-expenses-report', [ReportsController::class, 'getExpensesReport']);
     Route::post('reports/get-expenses-pdf', [ReportsController::class, 'getExpensesPdf']);
 

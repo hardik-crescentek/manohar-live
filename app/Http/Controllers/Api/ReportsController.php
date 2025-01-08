@@ -254,6 +254,145 @@ class ReportsController extends Controller
         }
     }
 
+    // Total system expenses
+
+    // Get report data
+    public function getTotalExpanseReport(Request $request)
+    {
+        try {
+            $startDate = $request->startDate ? Carbon::parse($request->startDate)->startOfDay() : null;
+            $endDate = $request->endDate ? Carbon::parse($request->endDate)->endOfDay() : null;
+
+            $models = $this->prepareModels($startDate, $endDate);
+
+            $totals = [];
+            foreach ($models as $key => $query) {
+                $sumField = $this->getSumField($key);
+                $totals[$key] = $query->sum($sumField);
+            }
+
+            $totalExpense = array_sum($totals);
+
+            return response()->json([
+                'status' => 200,
+                'data' => [
+                    'totals' => $totals,
+                    'totalExpense' => $totalExpense,
+                    'from' => $startDate ? $startDate->format('d-m-Y') : null,
+                    'to' => $endDate ? $endDate->format('d-m-Y') : null,
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
+        }
+    }
+
+    // Generate report PDF
+    // public function getTotalExpansesPdf(Request $request)
+    // {
+    //     try {
+    //         $startDate = $request->startDate ? Carbon::parse($request->startDate)->startOfDay() : null;
+    //         $endDate = $request->endDate ? Carbon::parse($request->endDate)->endOfDay() : null;
+
+    //         $models = $this->prepareModels($startDate, $endDate);
+
+    //         $totals = [];
+    //         foreach ($models as $key => $query) {
+    //             $sumField = $this->getSumField($key);
+    //             $totals[$key] = $query->sum($sumField);
+    //         }
+
+    //         $totalExpense = array_sum($totals);
+
+    //         $data = [
+    //             'totals' => $totals,
+    //             'start_date' => $startDate ? $startDate->format('d-m-Y') : null,
+    //             'end_date' => $endDate ? $endDate->format('d-m-Y') : null,
+    //             'totalExpense' => $totalExpense,
+    //         ];
+
+    //         $pdf = PDF::loadView('reports.Pdf.totalexpenses', $data);
+    //         return $pdf->download('total_expenses_report.pdf');
+    //     } catch (\Exception $e) {
+    //         return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
+    //     }
+    // }
+
+    public function getTotalExpansesPdf(Request $request)
+{
+    try {
+        $startDate = $request->startDate ? Carbon::parse($request->startDate)->startOfDay() : null;
+        $endDate = $request->endDate ? Carbon::parse($request->endDate)->endOfDay() : null;
+
+        $models = $this->prepareModels($startDate, $endDate);
+
+        $totals = [];
+        foreach ($models as $key => $query) {
+            $sumField = $this->getSumField($key);
+            $totals[$key] = $query->sum($sumField);
+        }
+
+        $totalExpense = array_sum($totals);
+
+        $data = [
+            'totals' => $totals,
+            'start_date' => $startDate ? $startDate->format('d-m-Y') : null,
+            'end_date' => $endDate ? $endDate->format('d-m-Y') : null,
+            'totalExpense' => $totalExpense,
+        ];
+
+        $pdf = PDF::loadView('reports.Pdf.totalexpenses', $data);
+        return $pdf->download('total_expenses_report.pdf');
+    } catch (\Exception $e) {
+        return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
+    }
+}
+
+
+    // Helper to prepare models for date filtering
+    private function prepareModels($startDate, $endDate)
+    {
+        $models = [
+            'Plants' => Plant::query(),
+            'Water Expenses' => Water::query(),
+            'Diesel' => Diesel::query(),
+            'Diesel Entries' => DieselEntry::query(),
+            'Staff Salaries' => Staff::query(),
+            'Vehicle Services' => VehicleService::query(),
+            'Bills' => Bill::where('status', 'paid'),
+            'Infrastructure' => Infrastructure::query(),
+            'Cameras' => Camera::query(),
+            'Fertilizer & Pesticides' => FertilizerPesticide::query(),
+            'Expenses' => Expense::query(),
+        ];
+
+        if ($startDate && $endDate) {
+            foreach ($models as $key => $query) {
+                $field = in_array($key, ['Expenses', 'Diesel', 'Plants', 'Water Expenses', 'Diesel Entries', 'Vehicle Services', 'Infrastructure', 'Fertilizer & Pesticides'])
+                    ? 'date'
+                    : 'created_at';
+                $models[$key] = $query->whereBetween($field, [$startDate, $endDate]);
+            }
+        }
+
+        return $models;
+    }
+
+    // Helper to get sum field for each model
+    private function getSumField($key)
+    {
+        return match ($key) {
+            'Plants', 'Water Expenses', 'Fertilizer & Pesticides' => 'price',
+            'Diesel' => 'total_price',
+            'Diesel Entries' => 'amount',
+            'Staff Salaries' => 'salary',
+            'Vehicle Services' => 'price',
+            'Infrastructure', 'Cameras' => 'amount',
+            'Bills', 'Expenses' => 'amount',
+        };
+    }
+
+    // End
     public function getExpensesReport(Request $request)
     {
 
