@@ -230,6 +230,8 @@ class LandsController extends Controller
 
     public function updateWaterLandPartWise(Request $request, $id)
     {
+        \Log::info("Api Called");
+        \Log::info($request->all(),$id);
         try {
             // Validate the input data
             $validator = Validator::make($request->all(), [
