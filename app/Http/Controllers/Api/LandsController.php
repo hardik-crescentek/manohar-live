@@ -177,7 +177,8 @@ class LandsController extends Controller
         }
     }
 
-    public function getWaterLandPartWise(Request $request, $id) {
+    public function getWaterLandPartWise(Request $request, $id)
+    {
 
         try {
             $waterEntries = WaterEntry::whereJsonContains('land_part_id', $id)->orderBy('id', 'desc')->get();
@@ -187,19 +188,72 @@ class LandsController extends Controller
         }
     }
 
+    // public function updateWaterLandPartWise(Request $request, $id)
+    // {
+    //     try {
+    //         // Validate the input data
+    //         $validator = Validator::make($request->all(), [
+    //             'land_id' => 'required',
+    //             'land_part_id' => 'required',
+    //             'date' => 'required',
+    //             'time' => 'required',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             throw new \Exception($validator->errors()->first());
+    //         }
+
+    //         // Find the water entry
+    //         $waterEntry = WaterEntry::find($id);
+
+    //         if (!$waterEntry) {
+    //             throw new \Exception('Water entry not found.');
+    //         }
+
+    //         // Update the water entry
+    //         $waterEntry->update([
+    //             'land_id' => $request->land_id,
+    //             'land_part_id' => $request->land_part_id,
+    //             'date' => date('Y-m-d', strtotime($request->date)),
+    //             'time' => date('H:i:s', strtotime($request->time)),
+    //             'person' => $request->person,
+    //             'volume' => $request->volume,
+    //             'notes' => $request->notes,
+    //         ]);
+
+    //         return response()->json(['status' => 200, 'message' => 'Water Entry updated successfully!', 'data' => $waterEntry], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
+    //     }
+    // }
+
     public function updateWaterLandPartWise(Request $request, $id)
     {
         try {
             // Validate the input data
             $validator = Validator::make($request->all(), [
                 'land_id' => 'required',
-                'land_part_id' => 'required',
+                'land_part_id' => 'required', // Ensure land_part_id is present
                 'date' => 'required',
                 'time' => 'required',
             ]);
 
             if ($validator->fails()) {
                 throw new \Exception($validator->errors()->first());
+            }
+
+            // Ensure land_part_id is an array
+            $landPartIds = $request->input('land_part_id');
+
+            // Check if land_part_id is a string (stringified array)
+            if (is_string($landPartIds)) {
+                $landPartIds = json_decode($landPartIds, true); // Decode the string into an array
+            }
+
+            // Check if it's still not an array after decoding
+            if (!is_array($landPartIds)) {
+                throw new \Exception('Invalid land_part_id format.');
             }
 
             // Find the water entry
@@ -212,7 +266,7 @@ class LandsController extends Controller
             // Update the water entry
             $waterEntry->update([
                 'land_id' => $request->land_id,
-                'land_part_id' => $request->land_part_id,
+                'land_part_id' => $landPartIds, // Use the decoded array
                 'date' => date('Y-m-d', strtotime($request->date)),
                 'time' => date('H:i:s', strtotime($request->time)),
                 'person' => $request->person,
@@ -221,11 +275,11 @@ class LandsController extends Controller
             ]);
 
             return response()->json(['status' => 200, 'message' => 'Water Entry updated successfully!', 'data' => $waterEntry], 200);
-
         } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
         }
     }
+
 
     public function destroyWaterLandPartWise(string $id)
     {
