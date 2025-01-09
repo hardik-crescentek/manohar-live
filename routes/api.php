@@ -106,5 +106,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('reports/get-fertilizer-report', [ReportsController::class, 'getFertilizerReport']);
     Route::post('reports/get-fertilizer-pdf', [ReportsController::class, 'getFertilizerPdf']);
 
+    // Plot report code
+    Route::post('reports/get-plot-report', [ReportsController::class, 'getPlotReport']);
+    Route::post('reports/get-plot-pdf', [ReportsController::class, 'getPlotPdf']);
+
     Route::get('notifications', [NotificationController::class, 'notifications']);
 });

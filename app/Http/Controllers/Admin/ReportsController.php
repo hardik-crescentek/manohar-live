@@ -59,7 +59,6 @@ class ReportsController extends Controller
         return view('reports.index', $data);
     }
 
-
     // Expenses
     public function expensesIndex(Request $request)
     {
@@ -418,7 +417,6 @@ class ReportsController extends Controller
         return $pdf->download('water_report.pdf');
     }
 
-
     //diesel Entries
     public function dieselIndex(Request $request)
     {
@@ -507,7 +505,6 @@ class ReportsController extends Controller
         return $pdf->download('diesel_report.pdf');
     }
 
-
     // bill management
     public function billIndex(Request $request)
     {
@@ -595,7 +592,6 @@ class ReportsController extends Controller
         return $pdf->download('bill_report.pdf');
     }
 
-
     // Plants report
     public function plantIndex(Request $request)
     {
@@ -670,7 +666,6 @@ class ReportsController extends Controller
         return $pdf->download('plant_report.pdf');
     }
 
-
     // fertilizer pestisides report
     public function fertilizerPesticidesIndex(Request $request)
     {
@@ -742,7 +737,6 @@ class ReportsController extends Controller
 
         return $pdf->download('fertilizer_pesticides_report.pdf');
     }
-
 
     // Staff report
     public function staffsIndex(Request $request)

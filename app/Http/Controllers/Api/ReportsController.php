@@ -8,8 +8,10 @@ use App\Models\Camera;
 use App\Models\Diesel;
 use App\Models\DieselEntry;
 use App\Models\Expense;
+use App\Models\FertilizerEntry;
 use App\Models\FertilizerPesticide;
 use App\Models\Infrastructure;
+use App\Models\JivamrutEntry;
 use App\Models\Land;
 use App\Models\LandPart;
 use App\Models\Plant;
@@ -17,6 +19,7 @@ use App\Models\Staff;
 use App\Models\Vehicle;
 use App\Models\VehicleService;
 use App\Models\Water;
+use App\Models\WaterEntry;
 use PDF;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -319,34 +322,34 @@ class ReportsController extends Controller
     // }
 
     public function getTotalExpansesPdf(Request $request)
-{
-    try {
-        $startDate = $request->startDate ? Carbon::parse($request->startDate)->startOfDay() : null;
-        $endDate = $request->endDate ? Carbon::parse($request->endDate)->endOfDay() : null;
+    {
+        try {
+            $startDate = $request->startDate ? Carbon::parse($request->startDate)->startOfDay() : null;
+            $endDate = $request->endDate ? Carbon::parse($request->endDate)->endOfDay() : null;
 
-        $models = $this->prepareModels($startDate, $endDate);
+            $models = $this->prepareModels($startDate, $endDate);
 
-        $totals = [];
-        foreach ($models as $key => $query) {
-            $sumField = $this->getSumField($key);
-            $totals[$key] = $query->sum($sumField);
+            $totals = [];
+            foreach ($models as $key => $query) {
+                $sumField = $this->getSumField($key);
+                $totals[$key] = $query->sum($sumField);
+            }
+
+            $totalExpense = array_sum($totals);
+
+            $data = [
+                'totals' => $totals,
+                'start_date' => $startDate ? $startDate->format('d-m-Y') : null,
+                'end_date' => $endDate ? $endDate->format('d-m-Y') : null,
+                'totalExpense' => $totalExpense,
+            ];
+
+            $pdf = PDF::loadView('reports.Pdf.totalexpenses', $data);
+            return $pdf->download('total_expenses_report.pdf');
+        } catch (\Exception $e) {
+            return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
         }
-
-        $totalExpense = array_sum($totals);
-
-        $data = [
-            'totals' => $totals,
-            'start_date' => $startDate ? $startDate->format('d-m-Y') : null,
-            'end_date' => $endDate ? $endDate->format('d-m-Y') : null,
-            'totalExpense' => $totalExpense,
-        ];
-
-        $pdf = PDF::loadView('reports.Pdf.totalexpenses', $data);
-        return $pdf->download('total_expenses_report.pdf');
-    } catch (\Exception $e) {
-        return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
     }
-}
 
 
     // Helper to prepare models for date filtering
@@ -958,6 +961,157 @@ class ReportsController extends Controller
             return response()->json(['status' => 200, 'data' => $data], 200);
         } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
+        }
+    }
+
+    // Plot Repoerts
+
+    public function getPlotReport(Request $request)
+    {
+        try {
+            // Extract filters from the request
+            $category = $request->category;
+            $startDate = $request->startDate;
+            $endDate = $request->endDate;
+            $landId = $request->land_id;
+
+            // Initialize filtered data variables
+            $entries = collect();
+
+            // Fetch land summary
+            $data = [
+                'totalLandCount' => Land::count(),
+                'totalWaterVolume' => WaterEntry::sum('volume'),
+                'totalJivamrutliter' => JivamrutEntry::sum('size'),
+                'totalFertilizerQty' => FertilizerEntry::sum('qty'),
+                'lands' => Land::pluck('name', 'id')->toArray(),
+            ];
+
+            // Apply filters for the selected category
+            if ($category === 'water') {
+                $entries = WaterEntry::when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('date', [$startDate, $endDate]);
+                })
+                    ->when($landId, function ($query) use ($landId) {
+                        $query->where('land_id', $landId);
+                    })
+                    ->get();
+            } elseif ($category === 'fertilizer') {
+                $entries = FertilizerEntry::when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('date', [$startDate, $endDate]);
+                })
+                    ->when($landId, function ($query) use ($landId) {
+                        $query->where('land_id', $landId);
+                    })
+                    ->get();
+            } elseif ($category === 'jivamrut') {
+                $entries = JivamrutEntry::when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('date', [$startDate, $endDate]);
+                })
+                    ->when($landId, function ($query) use ($landId) {
+                        $query->where('land_id', $landId);
+                    })
+                    ->get();
+            }
+
+            // Include filtered entries in the response
+            $data['filteredEntries'] = $entries;
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Plot report fetched successfully.',
+                'data' => $data,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Failed to fetch plot report.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    public function getPlotPdf(Request $request)
+    {
+        try {
+            // Extract filters from the request
+            $category = $request->category;
+            $landId = $request->land_id;
+            $startDate = $request->startDate; // Extract startDate
+            $endDate = $request->endDate; // Extract endDate
+
+            // Validate and format the start and end dates
+            if ($startDate) {
+                $startDate = date('Y-m-d', strtotime($startDate)); // Format start date
+            }
+            if ($endDate) {
+                $endDate = date('Y-m-d', strtotime($endDate)); // Format end date
+            }
+
+            // Initialize query and fetch data based on category
+            $entries = collect();
+            if ($category === 'water') {
+                $entries = WaterEntry::with('land')
+                    ->when($startDate && $endDate, fn($query) => $query->whereBetween('date', [$startDate, $endDate]))
+                    ->when($landId, fn($query) => $query->where('land_id', $landId))
+                    ->get();
+            } elseif ($category === 'fertilizer') {
+                $entries = FertilizerEntry::with('land')
+                    ->when($startDate && $endDate, fn($query) => $query->whereBetween('date', [$startDate, $endDate]))
+                    ->when($landId, fn($query) => $query->where('land_id', $landId))
+                    ->get();
+            } elseif ($category === 'jivamrut') {
+                $entries = JivamrutEntry::with('land')
+                    ->when($startDate && $endDate, fn($query) => $query->whereBetween('date', [$startDate, $endDate]))
+                    ->when($landId, fn($query) => $query->where('land_id', $landId))
+                    ->get();
+            }
+
+            // Fetch land details if landId is provided
+            $landDetail = $landId ? Land::find($landId) : null;
+
+            // Total calculation based on category
+            $total = 0;
+            if ($category === 'water') {
+                $total = $entries->sum('volume'); // Adjust as per requirement
+            } elseif ($category === 'fertilizer') {
+                $total = $entries->sum('quantity'); // Adjust as per requirement
+            } else {
+                $total = $entries->sum('size');
+            }
+
+            // Prepare data for the view
+            $data = [
+                'category' => $category,
+                'entries' => $entries,
+                'landDetail' => $landDetail,
+                'from' => $startDate ? date('d-m-Y', strtotime($startDate)) : null,
+                'to' => $endDate ? date('d-m-Y', strtotime($endDate)) : null,
+                'total' => $total,
+            ];
+
+            // Generate a dynamic filename
+            $filename = 'Plot_Report_' . ucfirst($category);
+            if ($landDetail) {
+                $filename .= '_Land_' . str_replace(' ', '_', $landDetail->name);
+            }
+            if ($startDate && $endDate) {
+                $filename .= '_' . $startDate . '_to_' . $endDate;
+            }
+            $filename .= '.pdf';
+
+            // Generate PDF and return download
+            $pdf = PDF::loadView('reports.Pdf.plot', $data);
+
+            // Download the generated PDF file
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Failed to generate plot PDF.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }
