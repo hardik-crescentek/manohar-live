@@ -332,7 +332,6 @@ class LandsController extends Controller
     public function updateWaterLandPartWise(Request $request, $id)
     {
         \Log::info("API Called");
-        \Log::info($id);
         \Log::info($request->all());
 
         try {
@@ -340,9 +339,9 @@ class LandsController extends Controller
             if ($request->has('land_part_id[]')) {
                 $landPartIds = $request->input('land_part_id[]');
 
-                // Convert string keys to integers
+                // Ensure it's stored as an array of strings
                 if (is_array($landPartIds)) {
-                    $landPartIds = array_map('intval', $landPartIds); // Convert each item to an integer
+                    $landPartIds = array_map('strval', $landPartIds); // Convert each item to a string
                 }
 
                 // Replace 'land_part_id[]' with 'land_part_id' in the request
@@ -354,8 +353,8 @@ class LandsController extends Controller
                 'land_id' => 'required|integer',
                 'land_part_id' => 'required|array', // Ensure it's an array
                 'land_part_id.*' => 'integer', // Ensure each item in the array is an integer
-                'date' => 'nullable', // Validate date format if provided
-                'time' => 'nullable', // Validate time format if provided
+                'date' => 'nullable|date_format:Y-m-d', // Validate date format if provided
+                'time' => 'nullable|date_format:H:i:s', // Validate time format if provided
             ]);
 
             if ($validator->fails()) {
@@ -375,10 +374,13 @@ class LandsController extends Controller
             // If time is provided, convert it to the correct format
             $time = !empty($request->time) ? date('H:i:s', strtotime($request->time)) : null;
 
+            // Convert land_part_id to JSON format
+            $landPartIdsJson = json_encode($request->land_part_id);
+
             // Update the water entry
             $waterEntry->update([
                 'land_id' => $request->land_id,
-                'land_part_id' => $request->land_part_id, // Use the converted array
+                'land_part_id' => $landPartIdsJson, // Save as a JSON string
                 'date' => $date, // Set null if no date provided
                 'time' => $time, // Set null if no time provided
                 'person' => $request->person ?? null, // Set null if empty
@@ -398,6 +400,7 @@ class LandsController extends Controller
             ], 400);
         }
     }
+
 
 
 
