@@ -192,107 +192,45 @@ class LandsController extends Controller
         }
     }
 
-    public function updateWaterLandPartWise(Request $request, $id)
-    {
-        \Log::info("API Called");
-        \Log::info($request->all());
-
-        try {
-            // // Validate the input data
-            // $validator = Validator::make($request->all(), [
-            //     'land_id' => 'required',
-            //     'land_part_id' => 'required', // Ensure it's an array
-            //     // 'land_part_id.*' => 'integer', // Ensure each item in the array is an integer
-            //     'date' => 'nullable', // Allow empty date, but validate if provided
-            //     'time' => 'nullable', // Allow empty time, but validate if provided
-            // ]);
-
-
-            $validator = Validator::make($request->all(), [
-                'land_id' => 'required',
-                'land_part_id' => 'required', // Ensure it's an array
-                // 'land_part_id.*' => 'integer', // Ensure each item in the array is an integer
-                'date' => 'nullable', // Validate date format if provided
-                'time' => 'nullable', // Validate time format if provided
-            ]);
-
-            if ($validator->fails()) {
-                throw new \Exception($validator->errors()->first());
-            }
-
-            // Ensure land_part_id is an array
-            $landPartIds = $request->input('land_part_id');
-
-            // If it's a string (stringified array), decode it
-            if (is_string($landPartIds)) {
-                $landPartIds = json_decode($landPartIds, true);
-            }
-
-            // Ensure it's an array after decoding (if needed)
-            if (!is_array($landPartIds)) {
-                throw new \Exception('Invalid land_part_id format.');
-            }
-
-            // Find the water entry by ID
-            $waterEntry = WaterEntry::find($id);
-
-            if (!$waterEntry) {
-                throw new \Exception('Water entry not found.');
-            }
-
-            // If date is provided, convert it to the correct format (Y-m-d)
-            $date = !empty($request->date) ? date('Y-m-d', strtotime($request->date)) : null;
-
-            // If time is provided, convert it to the correct format (H:i:s)
-            $time = !empty($request->time) ? date('H:i:s', strtotime($request->time)) : null;
-
-            // Update the water entry
-            $waterEntry->update([
-                'land_id' => $request->land_id,
-                'land_part_id' => $landPartIds, // Update with the array
-                'date' => $date, // If no date, it will remain null
-                'time' => $time, // If no time, it will remain null
-                'person' => $request->person ?? null, // If person is empty, set as null
-                'volume' => $request->volume ?? null, // If volume is empty, set as null
-                'notes' => $request->notes ?? null, // If notes are empty, set as null
-            ]);
-
-            return response()->json(['status' => 200, 'message' => 'Water Entry updated successfully!', 'data' => $waterEntry], 200);
-        } catch (\Exception $e) {
-            return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
-        }
-    }
-
     // public function updateWaterLandPartWise(Request $request, $id)
     // {
     //     \Log::info("API Called");
     //     \Log::info($request->all());
 
     //     try {
-    //         // Convert 'land_part_id[]' to 'land_part_id' if it exists
-    //         if ($request->has('land_part_id[]')) {
-    //             $landPartIds = $request->input('land_part_id[]');
+    //         // // Validate the input data
+    //         // $validator = Validator::make($request->all(), [
+    //         //     'land_id' => 'required',
+    //         //     'land_part_id' => 'required', // Ensure it's an array
+    //         //     // 'land_part_id.*' => 'integer', // Ensure each item in the array is an integer
+    //         //     'date' => 'nullable', // Allow empty date, but validate if provided
+    //         //     'time' => 'nullable', // Allow empty time, but validate if provided
+    //         // ]);
 
-    //             // Convert string keys to integers
-    //             if (is_array($landPartIds)) {
-    //                 $landPartIds = array_map('intval', $landPartIds); // Convert each item to an integer
-    //             }
 
-    //             // Replace 'land_part_id[]' with 'land_part_id' in the request
-    //             $request->merge(['land_part_id' => $landPartIds]);
-    //         }
-
-    //         // Validate the input data
     //         $validator = Validator::make($request->all(), [
-    //             'land_id' => 'required|integer',
-    //             'land_part_id' => 'required|array', // Ensure it's an array
-    //             'land_part_id.*' => 'integer', // Ensure each item in the array is an integer
-    //             'date' => 'nullable|date_format:Y-m-d', // Validate date format if provided
-    //             'time' => 'nullable|date_format:H:i:s', // Validate time format if provided
+    //             'land_id' => 'required',
+    //             'land_part_id' => 'required', // Ensure it's an array
+    //             // 'land_part_id.*' => 'integer', // Ensure each item in the array is an integer
+    //             'date' => 'nullable', // Validate date format if provided
+    //             'time' => 'nullable', // Validate time format if provided
     //         ]);
 
     //         if ($validator->fails()) {
     //             throw new \Exception($validator->errors()->first());
+    //         }
+
+    //         // Ensure land_part_id is an array
+    //         $landPartIds = $request->input('land_part_id');
+
+    //         // If it's a string (stringified array), decode it
+    //         if (is_string($landPartIds)) {
+    //             $landPartIds = json_decode($landPartIds, true);
+    //         }
+
+    //         // Ensure it's an array after decoding (if needed)
+    //         if (!is_array($landPartIds)) {
+    //             throw new \Exception('Invalid land_part_id format.');
     //         }
 
     //         // Find the water entry by ID
@@ -302,38 +240,70 @@ class LandsController extends Controller
     //             throw new \Exception('Water entry not found.');
     //         }
 
-    //         // If date is provided, convert it to the correct format
+    //         // If date is provided, convert it to the correct format (Y-m-d)
     //         $date = !empty($request->date) ? date('Y-m-d', strtotime($request->date)) : null;
 
-    //         // If time is provided, convert it to the correct format
+    //         // If time is provided, convert it to the correct format (H:i:s)
     //         $time = !empty($request->time) ? date('H:i:s', strtotime($request->time)) : null;
 
     //         // Update the water entry
     //         $waterEntry->update([
     //             'land_id' => $request->land_id,
-    //             'land_part_id' => $request->land_part_id, // Use the converted array
-    //             'date' => $date, // Set null if no date provided
-    //             'time' => $time, // Set null if no time provided
-    //             'person' => $request->person ?? null, // Set null if empty
-    //             'volume' => $request->volume ?? null, // Set null if empty
-    //             'notes' => $request->notes ?? null, // Set null if empty
+    //             'land_part_id' => $landPartIds, // Update with the array
+    //             'date' => $date, // If no date, it will remain null
+    //             'time' => $time, // If no time, it will remain null
+    //             'person' => $request->person ?? null, // If person is empty, set as null
+    //             'volume' => $request->volume ?? null, // If volume is empty, set as null
+    //             'notes' => $request->notes ?? null, // If notes are empty, set as null
     //         ]);
 
-    //         return response()->json([
-    //             'status' => 200,
-    //             'message' => 'Water Entry updated successfully!',
-    //             'data' => $waterEntry
-    //         ], 200);
+    //         return response()->json(['status' => 200, 'message' => 'Water Entry updated successfully!', 'data' => $waterEntry], 200);
     //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'status' => 400,
-    //             'message' => $e->getMessage()
-    //         ], 400);
+    //         return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
     //     }
     // }
 
 
+    public function updateWater(Request $request, $id)
+{
+    \Log::info("Update Water Entry");
+    \Log::info($request->all());
 
+    try {
+        $validator = Validator::make($request->all(), [
+            'land_id' => 'required',
+            'land_part_id' => 'required',
+            'date' => 'required',
+            'time' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            throw new \Exception($validator->errors()->first());
+        }
+
+        // Find the water entry by ID
+        $waterEntry = WaterEntry::find($id);
+
+        if (!$waterEntry) {
+            throw new \Exception('Water Entry not found!');
+        }
+
+        // Update the water entry
+        $waterEntry->update([
+            'land_id' => $request->land_id,
+            'land_part_id' => $request->land_part_id,
+            'date' => date('Y-m-d', strtotime($request->date)),
+            'time' => date('H:i:s', strtotime($request->time)),
+            'person' => $request->person,
+            'volume' => $request->volume,
+            'notes' => $request->notes
+        ]);
+
+        return response()->json(['status' => 200, 'message' => 'Water Entry updated successfully!', 'data' => $waterEntry], 200);
+    } catch (\Exception $e) {
+        return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
+    }
+}
 
     public function destroyWaterLandPartWise(string $id)
     {
