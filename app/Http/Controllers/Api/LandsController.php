@@ -375,10 +375,12 @@ class LandsController extends Controller
             // If time is provided, convert it to the correct format
             $time = !empty($request->time) ? date('H:i:s', strtotime($request->time)) : null;
 
+            $landPartIdsJson = json_encode($request->land_part_id);
             // Update the water entry
             $waterEntry->update([
                 'land_id' => $request->land_id,
-                'land_part_id' => $request->land_part_id, // Use the converted array
+                // 'land_part_id' => $request->land_part_id, // Use the converted array
+                'land_part_id' => $landPartIdsJson, // Use the converted array
                 'date' => $date, // Set null if no date provided
                 'time' => $time, // Set null if no time provided
                 'person' => $request->person ?? null, // Set null if empty
