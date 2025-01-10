@@ -50,40 +50,75 @@ class JivamrutEntryController extends Controller
 
     public function updateJivamrutEntry(Request $request, $id)
     {
+        \Log::info("API Called");
+        \Log::info($id);
+        \Log::info($request->all());
+
         try {
+            // Convert 'land_part_id[]' to 'land_part_id' if it exists
+            if ($request->has('land_part_id[]')) {
+                $landPartIds = $request->input('land_part_id[]');
+
+                // Convert string keys to integers
+                if (is_array($landPartIds)) {
+                    $landPartIds = array_map('intval', $landPartIds); // Convert each item to an integer
+                }
+
+                // Replace 'land_part_id[]' with 'land_part_id' in the request
+                $request->merge(['land_part_id' => $landPartIds]);
+            }
+
+            // Validate the input data
             $validator = Validator::make($request->all(), [
-                'land_id' => 'required',
-                'land_part_id' => 'required',
-                'date' => 'required',
-                'time' => 'required',
+                'land_id' => 'required|integer',
+                'land_part_id' => 'required|array', // Ensure it's an array
+                'land_part_id.*' => 'integer', // Ensure each item in the array is an integer
+                'date' => 'nullable', // Validate date format if provided
+                'time' => 'nullable', // Validate time format if provided
             ]);
 
             if ($validator->fails()) {
                 throw new \Exception($validator->errors()->first());
             }
 
-            // Find the JivamrutEntry by id
+            // Find the JivamrutEntry record by ID
             $jivamrutEntry = JivamrutEntry::find($id);
 
             if (!$jivamrutEntry) {
-                throw new \Exception('Jivamrut Entry not found!');
+                throw new \Exception('Jivamrut Entry not found.');
             }
 
-            // Update the entry
+            // If date is provided, convert it to the correct format
+            $date = !empty($request->date) ? date('Y-m-d', strtotime($request->date)) : null;
+
+            // If time is provided, convert it to the correct format
+            $time = !empty($request->time) ? date('H:i:s', strtotime($request->time)) : null;
+
+            // Update the JivamrutEntry record
             $jivamrutEntry->update([
                 'land_id' => $request->land_id,
-                'land_part_id' => $request->land_part_id,
-                'date' => date('Y-m-d', strtotime($request->date)),
-                'time' => date('H:i:s', strtotime($request->time)),
-                'qty' => $request->qty,
-                'remarks' => $request->remarks,
+                'land_part_id' => $request->land_part_id, // Use the converted array
+                'date' => $date, // Set null if no date provided
+                'time' => $time, // Set null if no time provided
+                'qty' => $request->qty ?? null, // Set null if empty
+                'remarks' => $request->remarks ?? null, // Set null if empty
             ]);
 
-            return response()->json(['status' => 200, 'message' => 'Jivamrut Entry updated successfully!', 'data' => $jivamrutEntry], 200);
+            return response()->json([
+                'status' => 200,
+                'message' => 'Jivamrut Entry updated successfully!',
+                'data' => $jivamrutEntry
+            ], 200);
         } catch (\Exception $e) {
-            return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
+            \Log::error("Error updating Jivamrut entry: " . $e->getMessage());
+
+            return response()->json([
+                'status' => 400,
+                'message' => $e->getMessage()
+            ], 400);
         }
     }
+
 
 
     public function getJivamrutPlotWise(Request $request, $id)
