@@ -264,7 +264,7 @@ class LandsController extends Controller
     // }
 
 
-    public function updateWater(Request $request, $id)
+    public function updateWaterLandPartWise(Request $request, $id)
 {
     \Log::info("Update Water Entry");
     \Log::info($request->all());
