@@ -16,12 +16,16 @@ class BillsController extends Controller
     public function index()
     {
         try {
-            $bills = Bill::orderBy('id', 'desc')->get();
+            $bills = Bill::with('land:id,name')
+                ->orderBy('id', 'desc')
+                ->get();
+
             return response()->json(['status' => 200, 'data' => $bills], 200);
         } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
         }
     }
+
 
     /**
      * Show the form for creating a new resource.
