@@ -28,7 +28,8 @@
                     @csrf
                     <div class="row row-sm">
                         <div class="col-md-6">
-                            <p class="mg-b-10">Managers</p>
+                            <label class="">Managers <span class="text-danger">*</span></label>
+                            {{-- <p class="mg-b-10"></p> --}}
                             <select class="form-control select2" name="user_id" required="">
                                 <option value="" selected disabled> Select manager </option>
                                 @if(isset($managers) && $managers != null)
