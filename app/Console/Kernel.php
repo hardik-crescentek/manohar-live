@@ -89,6 +89,7 @@ class Kernel extends ConsoleKernel
         $settingLitrs = NotificationSetting::where('id', 1)->value('diesel');
 
         if($remainingDiesel <= $settingLitrs) {
+            \Log::info("Called Disel");
 
             SendDieselNotification::dispatch($settingLitrs);
         }
@@ -155,7 +156,7 @@ class Kernel extends ConsoleKernel
     }
 
     protected function cameraRechargeNotification(Schedule $schedule) {
-       
+
         // camera data list
         $cameraRechargeNotification = Camera::get();
 
@@ -169,19 +170,19 @@ class Kernel extends ConsoleKernel
                 if(isset($days) && $days != '0' && isset($lastCleaningDate)){
                     \Log::info('if call camera');
                     $notificationDate = Carbon::parse($lastCleaningDate)->addDays($days);
-        
+
                     // Check if notification date matches current date
                     \Log::info('$notificationDate  '.$notificationDate);
                     if($notificationDate->isToday()) {
                         \Log::info('Notification triggered for  camera' . $cameraName . ' at ' . now());
-        
+
                         // Dispatch job for sending notification
                         SendCameraRechargeNotificationJob::dispatch($cameraName,$cameraSimNumber);
                     }
                 } else if(isset($days) && $days != '0') {
-                    \Log::info('else call camera');        
+                    \Log::info('else call camera');
                     $cronExpression = "0 0 */{$days} * *";
-        
+
                     $schedule->call(function ()  use ($cameraName) {
                         SendCameraRechargeNotificationJob::dispatch($cameraName,$cameraSimNumber);
                     })->cron($cronExpression);
@@ -316,26 +317,26 @@ class Kernel extends ConsoleKernel
 
     protected function saveDailyAttendance() {
         $date = now()->format('Y-m-d');
-    
+
         // Get all active staff members
         $staffMembers = StaffMember::whereDate('join_date', '<=', $date)
                         ->where(function ($query) use ($date) {
                             $query->whereDate('end_date', '>=', $date)->orWhereNull('end_date');
                         })
                         ->get();
-    
+
         // Get all active staff
         $staffs = Staff::whereDate('joining_date', '<=', $date)
                     ->where(function ($query) use ($date) {
                         $query->whereDate('resign_date', '>=', $date)->orWhereNull('resign_date');
                     })
                     ->get();
-    
+
         // Loop through staff members
         foreach ($staffMembers as $member) {
             $this->saveAttendanceForEntity($member->id, $member->staff_id, $date); // Save attendance for StaffMember
         }
-    
+
         // Loop through staff
         foreach ($staffs as $staff) {
             $this->saveAttendanceForEntity(null, $staff->id, $date); // Save attendance for Staff
