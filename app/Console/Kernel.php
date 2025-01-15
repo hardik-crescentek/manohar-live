@@ -121,8 +121,6 @@ class Kernel extends ConsoleKernel
                 $vehNumber = $dv_val->number;
                 if($days){
                     \Log::info('call');
-                    \Log::info($vehName);
-                    \Log::info($vehNumber);
 
                     $cronExpression = "0 0 */{$days} * *";
                     // $minutes = 1;
