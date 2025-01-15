@@ -63,13 +63,15 @@ class Kernel extends ConsoleKernel
         $this->plotsFilterCleaningNotification($schedule);
         $this->agendaCompletionNotification($schedule);
         $this->cameraRechargeNotification($schedule);
-        $this->boreWellsFilterCleaningNotification($schedule);
 
-        // $jivamrutDays = NotificationSetting::where('id', 1)->value('Jivamrut');
-        // $jivamrutCronExpression = "0 0 */{$jivamrutDays} * *";
+        // Test Commit on 15/01/2025
+        // $this->boreWellsFilterCleaningNotification($schedule);
+
+        $jivamrutDays = NotificationSetting::where('id', 1)->value('Jivamrut');
+        $jivamrutCronExpression = "0 0 */{$jivamrutDays} * *";
         // $jivamrutMinutes = $jivamrutDays * 24 * 60;
         // $jivamrutCronExpression = "*/{$jivamrutMinutes} * * * *";
-        // $schedule->call(function () { $this->JivamrutNotification();})->cron($jivamrutCronExpression);
+        $schedule->call(function () { $this->JivamrutNotification();})->cron($jivamrutCronExpression);
 
         // $schedule->call(function () { $this->saveDailyAttendance();})->dailyAt('0:00');
         $schedule->call(function () { $this->saveDailyAttendance();});
