@@ -120,7 +120,7 @@ class Kernel extends ConsoleKernel
                 $vehName = $dv_val->name;
                 $vehNumber = $dv_val->number;
                 if($days){
-                    \Log::info('call');
+                    \Log::info('call-vehicleNotification');
 
                     $cronExpression = "0 0 */{$days} * *";
                     // $minutes = 1;
@@ -214,7 +214,7 @@ class Kernel extends ConsoleKernel
                         SendBoreWellsFilterCleaningNotificationJob::dispatch($filterName);
                     }
                 } else {
-                    \Log::info('call');
+                    \Log::info('call-boreWellsFilterCleaningNotification');
 
                     $cronExpression = "0 0 */{$days} * *";
                     $schedule->call(function ()  use ($filterName) {
