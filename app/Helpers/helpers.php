@@ -74,6 +74,12 @@ function generateInteger($n)
 
 function sendNotification(array $device_token, string $title, string $body)
 {
+
+    \Log::info('Preparing to send notification', [
+        'device_tokens' => $device_token,
+        'title' => $title,
+        'body' => $body
+    ]);
     try {
         $SERVER_API_KEY = env('SERVER_API_KEY');
 
@@ -116,7 +122,7 @@ function sendNotification(array $device_token, string $title, string $body)
         curl_setopt($ch, CURLOPT_POSTFIELDS, $dataString);
 
         $response = curl_exec($ch);
-        //Log::info('Notification sent: '. $body);
+        Log::info('Notification sent: ' . $body);
         return $response;
     } catch (\Exception $e) {
         Log::info('Notification Error: ' . $e->getMessage());

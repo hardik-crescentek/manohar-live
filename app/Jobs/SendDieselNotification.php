@@ -37,6 +37,8 @@ class SendDieselNotification implements ShouldQueue
     {
         try{
             $usertoken = User::whereNotNull('device_token')->pluck('device_token')->all();
+            \Log::info("Diesel Notification is called in file");
+            \Log::info($usertoken);
             sendNotification($usertoken, 'Manohar Farms', $this->dieselLitrs . ' Litrs Diesel remaining');
         } catch(\Exception $e) {
             Log::error('SendFlushingNotificationJob - ' . $e->getMessage());
