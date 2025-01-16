@@ -208,23 +208,64 @@ class Kernel extends ConsoleKernel
         }
     }
 
-    protected function boreWellsFilterCleaningNotification(Schedule $schedule)
-    {
+    // protected function boreWellsFilterCleaningNotification(Schedule $schedule)
+    // {
+    //     // Fetch filter data list
+    //     $boreWellsFilterNotification = FilterHistory::get();
+
+    //     if ($boreWellsFilterNotification) {
+    //         foreach ($boreWellsFilterNotification as $filter_key => $filter_val) {
+    //             $days = $filter_val->filter_notification;
+    //             $filterName = $filter_val->name;
+    //             $lastCleaningDate = $filter_val->last_cleaning_date;
+
+    //             if (isset($days) && $days != '0' && isset($lastCleaningDate)) {
+    //                 \Log::info('lastCleaningDate');
+    //                 $notificationDate = Carbon::parse($lastCleaningDate)->addDays($days);
+
+    //                 // Check if notification date matches current date
+    //                 if ($notificationDate->isToday()) {
+    //                     \Log::info('Notification triggered for ' . $filterName . ' at ' . now());
+
+    //                     // Dispatch job for sending notification
+    //                     SendBoreWellsFilterCleaningNotificationJob::dispatch($filterName);
+    //                 }
+    //             } else {
+    //                 \Log::info('call-boreWellsFilterCleaningNotification');
+
+    //                 // Validate $days to ensure it is a positive integer
+    //                 if (is_numeric($days) && $days > 0) {
+    //                     \Log::info($days);
+    //                     $cronExpression = "0 0 */{$days} * *";
+    //                     \Log::info($cronExpression);
+    //                     $schedule->call(function () use ($filterName) {
+    //                         SendBoreWellsFilterCleaningNotificationJob::dispatch($filterName);
+    //                     })->cron($cronExpression);
+    //                 } else {
+    //                     \Log::error("Invalid 'days' value for filter {$filterName}: {$days}");
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+    protected function boreWellsFilterCleaningNotification(Schedule $schedule) {
+
         // Fetch filter data list
         $boreWellsFilterNotification = FilterHistory::get();
 
-        if ($boreWellsFilterNotification) {
-            foreach ($boreWellsFilterNotification as $filter_key => $filter_val) {
+        if($boreWellsFilterNotification){
+            foreach($boreWellsFilterNotification as $filter_key => $filter_val){
                 $days = $filter_val->filter_notification;
                 $filterName = $filter_val->name;
                 $lastCleaningDate = $filter_val->last_cleaning_date;
 
-                if (isset($days) && $days != '0' && isset($lastCleaningDate)) {
+                if(isset($days) && $days != '0' && isset($lastCleaningDate)){
                     \Log::info('lastCleaningDate');
                     $notificationDate = Carbon::parse($lastCleaningDate)->addDays($days);
 
                     // Check if notification date matches current date
-                    if ($notificationDate->isToday()) {
+                    if($notificationDate->isToday()) {
                         \Log::info('Notification triggered for ' . $filterName . ' at ' . now());
 
                         // Dispatch job for sending notification
@@ -233,20 +274,14 @@ class Kernel extends ConsoleKernel
                 } else {
                     \Log::info('call-boreWellsFilterCleaningNotification');
 
-                    // Validate $days to ensure it is a positive integer
-                    if (is_numeric($days) && $days > 0) {
-                        \Log::info($days);
-                        $cronExpression = "0 0 */{$days} * *";
-                        \Log::info($cronExpression);
-                        $schedule->call(function () use ($filterName) {
-                            SendBoreWellsFilterCleaningNotificationJob::dispatch($filterName);
-                        })->cron($cronExpression);
-                    } else {
-                        \Log::error("Invalid 'days' value for filter {$filterName}: {$days}");
-                    }
+                    $cronExpression = "0 0 */{$days} * *";
+                    $schedule->call(function ()  use ($filterName) {
+                        SendBoreWellsFilterCleaningNotificationJob::dispatch($filterName);
+                    })->cron($cronExpression);
                 }
             }
         }
+
     }
 
 
