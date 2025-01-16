@@ -105,9 +105,10 @@ class Kernel extends ConsoleKernel
         $settingLitrs = NotificationSetting::where('id', 1)->value('diesel');
 
         if ($remainingDiesel <= $settingLitrs) {
-            \Log::info("Called Disel");
+            \Log::info("Called Diesel");
 
             SendDieselNotification::dispatch($settingLitrs);
+
         }
     }
 
@@ -234,7 +235,9 @@ class Kernel extends ConsoleKernel
 
                     // Validate $days to ensure it is a positive integer
                     if (is_numeric($days) && $days > 0) {
+                        \Log::info($days);
                         $cronExpression = "0 0 */{$days} * *";
+                        \Log::info($cronExpression);
                         $schedule->call(function () use ($filterName) {
                             SendBoreWellsFilterCleaningNotificationJob::dispatch($filterName);
                         })->cron($cronExpression);
