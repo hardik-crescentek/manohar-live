@@ -111,4 +111,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('reports/get-plot-pdf', [ReportsController::class, 'getPlotPdf']);
 
     Route::get('notifications', [NotificationController::class, 'notifications']);
+
+    Route::post('send-notification', [AdminController::class,'sendPushNotification']);
+
 });

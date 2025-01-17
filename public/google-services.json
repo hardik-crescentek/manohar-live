@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "336631609177",
+    "project_id": "manohar-farms",
+    "storage_bucket": "manohar-farms.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:336631609177:android:206eb92b5f2f14b087be48",
+        "android_client_info": {
+          "package_name": "com.shinetech.manoharfarm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrsxmgYnchCor0yN_nvhkeigN3G-fEy4s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
