@@ -61,6 +61,11 @@
                                 <label class="">Rate / day</label>
                                 <input class="form-control" name="rate_per_day" type="text" onkeypress="return onlyNumbers(event)" value="{{ old('rate_per_day', $staff->rate_per_day) }}">
                             </div>
+
+                            <div class="form-group">
+                                <label class="">Labour Number</label>
+                                <input class="form-control" name="labour_number" type="text" onkeypress="return onlyNumbers(event)" value="{{ old('labour_number', $staff->labour_number) }}">
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">

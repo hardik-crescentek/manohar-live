@@ -6,6 +6,7 @@
             <th>Type</th>
             <th>Role</th>
             <th>Name</th>
+            <th>labour Number</th>
             <th>Phone</th>
             <th>Email</th>
             <th>Salary</th>
@@ -22,13 +23,17 @@
             <td> <img src="{{ asset('uploads/staffs/'.$item->image) }}" alt="" width="50"></td>
             <td>{{ $item->type == 1 ? 'Salaried' : 'On demand' }}</td>
             <td>{{ $item->role }}</td>
-            <td>
+            {{-- <td>
                 @if($item->is_leader == 1)
                     <a href="{{ route('staff.teams', $item->id) }}"> {{ $item->name }} </a>
                 @else
                     {{ $item->name }}
                 @endif
+            </td> --}}
+            <td>
+                    {{ $item->name }}
             </td>
+            <td>{{ $item->labour_number }}</td>
             <td>{{ $item->phone }}</td>
             <td>{{ $item->email }}</td>
             <td>{{ $item->type == 1 ? $item->salary : $item->rate_per_day }}</td>

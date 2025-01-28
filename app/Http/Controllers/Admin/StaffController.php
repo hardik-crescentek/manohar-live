@@ -33,6 +33,7 @@ class StaffController extends Controller
      */
     public function store(Request $request)
     {
+
         $request->validate([
             'name' => 'required|max:120',
             'phone' => 'required|unique:staffs,phone',
@@ -54,32 +55,38 @@ class StaffController extends Controller
         $createStaff->address = $request->address;
         $createStaff->salary = $request->type == 1 ? $request->salary : null;
         $createStaff->rate_per_day = $request->type == 2 ? $request->rate_per_day : null;
-        if($request->joining_date != null) {
+        if ($request->joining_date != null) {
             $createStaff->joining_date = date('Y-m-d', strtotime($request->joining_date));
         }
-        if($request->resign_date != null) {
+        if ($request->resign_date != null) {
             $createStaff->resign_date = date('Y-m-d', strtotime($request->resign_date));
         }
-        $createStaff->save();
-
-        if($request->staff_leader == 1 && $request->team_name != null) {
-
-            foreach($request->team_name as $key => $teamname) {
-
-                if(isset($request->team_name[$key]) && $request->team_name[$key] != '') {
-
-                    $createTeam = StaffMember::create([
-                        'staff_id' => $createStaff->id,
-                        'name' => $request->team_name[$key],
-                        'role' => $request->team_role[$key],
-                        'join_date' => $request->team_joindate[$key] != null ? date('Y-m-d', strtotime($request->team_joindate[$key])) : null,
-                        'end_date' => $request->team_enddate[$key] != null ? date('Y-m-d', strtotime($request->team_enddate[$key])) : null
-                    ]);
-                }
-            }
+        if ($request->type == 2 || $request->staff_leader == 1) {
+            $createStaff->labour_number = $request->labour_number;
+            // dd($request->labour_number);
         }
 
-        if($createStaff) {
+        // dd($createStaff);
+        $createStaff->save();
+
+        // if($request->staff_leader == 1 && $request->team_name != null) {
+
+        //     foreach($request->team_name as $key => $teamname) {
+
+        //         if(isset($request->team_name[$key]) && $request->team_name[$key] != '') {
+
+        //             $createTeam = StaffMember::create([
+        //                 'staff_id' => $createStaff->id,
+        //                 'name' => $request->team_name[$key],
+        //                 'role' => $request->team_role[$key],
+        //                 'join_date' => $request->team_joindate[$key] != null ? date('Y-m-d', strtotime($request->team_joindate[$key])) : null,
+        //                 'end_date' => $request->team_enddate[$key] != null ? date('Y-m-d', strtotime($request->team_enddate[$key])) : null
+        //             ]);
+        //         }
+        //     }
+        // }
+
+        if ($createStaff) {
             return redirect()->route('staffs.index')->with(['success' => true, 'message' => 'Staff added successfully!']);
         } else {
             return redirect()->route('staffs.index')->with(['error'  => true, 'message' => 'Something went wrong!']);
@@ -128,29 +135,31 @@ class StaffController extends Controller
         $updateStaff->address = $request->address;
         $updateStaff->salary = $request->type == 1 ? $request->salary : null;
         $updateStaff->rate_per_day = $request->type == 2 ? $request->rate_per_day : null;
-        if($request->joining_date != null) {
+        if ($request->joining_date != null) {
             $updateStaff->joining_date = date('Y-m-d', strtotime($request->joining_date));
         }
-        if($request->resign_date != null) {
+        if ($request->resign_date != null) {
             $updateStaff->resign_date = date('Y-m-d', strtotime($request->resign_date));
+        }
+        if ($request->type == 2 || $request->staff_leader == 1) {
+            $updateStaff->labour_number = $request->labour_number;
         }
         $updateStaff->save();
 
-        if($request->hasFile('image')){
+        if ($request->hasFile('image')) {
             $staff = Staff::where('id', $id)->first();
-            if(isset($staff->image) && $staff->image != null) {
-    
+            if (isset($staff->image) && $staff->image != null) {
+
                 $fileName = fileUpload('staffs', $request->image, $staff->image);
-    
             } else {
-    
+
                 $fileName = fileUpload('staffs', $request->image);
             }
             $staff->image = $fileName;
             $staff->save();
         }
 
-        if($updateStaff) {
+        if ($updateStaff) {
             return redirect()->route('staffs.index')->with(['success' => true, 'message' => 'Staff updated successfully!']);
         } else {
             return redirect()->route('staffs.index')->with(['error'  => true, 'message' => 'Something went wrong!']);
@@ -164,20 +173,21 @@ class StaffController extends Controller
     {
         $deleteStaff = Staff::where('id', $id)->delete();
 
-        if($deleteStaff) {
+        if ($deleteStaff) {
             return response()->json(['status' => true, 'message' => 'Success', 'data' => []], 200);
         } else {
             return response()->json(['status' => false, 'message' => 'Error', 'data' => []], 201);
         }
     }
 
-    public function getTable(Request $request) {
+    public function getTable(Request $request)
+    {
 
         $type = $request->type;
 
         $query = Staff::orderBy('id', 'desc');
 
-        if(isset($type) && $type != 0) {
+        if (isset($type) && $type != 0) {
             $query->where('type', $type);
         }
 
@@ -186,7 +196,8 @@ class StaffController extends Controller
         return View::make('staffs.Ajax.table', $data);
     }
 
-    public function teams($id) {
+    public function teams($id)
+    {
 
         $data['leader_id'] = $id;
 
@@ -196,23 +207,24 @@ class StaffController extends Controller
         return view('staffs.teams', $data);
     }
 
-    public function getAttendance(Request $request) {
+    public function getAttendance(Request $request)
+    {
 
         $leader_id = $request->leader_id;
         $date = $request->date;
         $type = $request->type;
 
         $query = DailyAttendance::with(['staff', 'staffMember'])->where('attendance_date', $date);
-                if ($leader_id) {
-                    $query->where('staff_id', $leader_id);
-                    $leader = Staff::where('id', $leader_id)->where('is_leader', 1)->first();
-                    $data['leader'] = $leader;
-                }
-                if ($type) {
-                    $query->whereHas('staff', function ($query) use ($type) {
-                        $query->where('type', $type);
-                    });
-                }
+        if ($leader_id) {
+            $query->where('staff_id', $leader_id);
+            $leader = Staff::where('id', $leader_id)->where('is_leader', 1)->first();
+            $data['leader'] = $leader;
+        }
+        if ($type) {
+            $query->whereHas('staff', function ($query) use ($type) {
+                $query->where('type', $type);
+            });
+        }
         $dailyAttendances = $query->get();
 
         $data['dailyAttendances'] = $dailyAttendances;
@@ -222,7 +234,8 @@ class StaffController extends Controller
         return View::make('staffs.Ajax.attendance_table', $data);
     }
 
-    public function getDailyAttendence(Request $request) {
+    public function getDailyAttendence(Request $request)
+    {
 
         $leaders = Staff::where('is_leader', 1)->pluck('name', 'id')->toArray();
         $data['leaders'] = $leaders;
@@ -230,7 +243,8 @@ class StaffController extends Controller
         return View::make('staffs.daily_attendance', $data);
     }
 
-    public function addAttendence(Request $request) {
+    public function addAttendence(Request $request)
+    {
 
         $staffId = $request->staff_id;
         $staffMemberId = $request->staff_member_id;
@@ -239,12 +253,12 @@ class StaffController extends Controller
 
         $attendence = DailyAttendance::where([['staff_id', $staffId], ['staff_member_id', $staffMemberId], ['attendance_date', $date]])->first();
 
-        if($attendence) {
+        if ($attendence) {
             $attendence->attendance_date = $date;
             $attendence->status = $status;
             $attendence->save();
         } else {
-            
+
             $attendence = new DailyAttendance();
             $attendence->attendance_date = $date;
             $attendence->staff_id = $staffId;
@@ -253,14 +267,15 @@ class StaffController extends Controller
             $attendence->save();
         }
 
-        if($attendence) {
+        if ($attendence) {
             return response()->json(['success' => true, 'message' => 'Attendance added successfull', 'data' => []], 200);
         } else {
             return response()->json(['error' => true, 'message' => 'Something went wrong', 'data' => []], 201);
         }
     }
 
-    public function attendanceHistory() {
+    public function attendanceHistory()
+    {
 
         $members = StaffMember::select('name', 'id', 'staff_id')->get();
         $data['members'] = $members;
@@ -271,7 +286,8 @@ class StaffController extends Controller
         return view('staffs.attandance_history', $data);
     }
 
-    public function getAttendanceHistory(Request $request) {
+    public function getAttendanceHistory(Request $request)
+    {
 
         $startDate = $request->startdate;
         $endDate = $request->enddate;
@@ -289,12 +305,12 @@ class StaffController extends Controller
         $attendanceQuery = DailyAttendance::whereIn('attendance_date', $dates);
         $membersQuery = StaffMember::orderBy('id', 'DESC');
 
-        if($staff_member != '') {
+        if ($staff_member != '') {
             $attendanceQuery->where('staff_member_id', $staff_member);
             $membersQuery->where('id', $staff_member);
         }
 
-        if($leader_id != '') {
+        if ($leader_id != '') {
             $attendanceQuery->where('staff_id', $leader_id);
             $membersQuery->where('staff_id', $leader_id);
         }
@@ -319,7 +335,8 @@ class StaffController extends Controller
         return View::make('staffs.Ajax.history_table', $data);
     }
 
-    public function staffMemberCreate(Request $request) {
+    public function staffMemberCreate(Request $request)
+    {
 
         $request->validate([
             'name' => 'required|max:120',
@@ -336,14 +353,15 @@ class StaffController extends Controller
             'end_date' => $request->resign_date != null ? date('Y-m-d', strtotime($request->resign_date)) : null
         ]);
 
-        if($createTeam) {
+        if ($createTeam) {
             return redirect()->route('staff.teams', $staff_id)->with(['success' => true, 'message' => 'Staff member added successfully!']);
         } else {
             return redirect()->route('staff.teams', $staff_id)->with(['error'  => true, 'message' => 'Something went wrong!']);
         }
     }
 
-    public function staffMemberUpdate(Request $request, $id) {
+    public function staffMemberUpdate(Request $request, $id)
+    {
 
         $request->validate([
             'name' => 'required|max:120',
@@ -351,7 +369,7 @@ class StaffController extends Controller
         ]);
 
         $staff_id = $request->staff_id;
-    
+
         $updateTeam = StaffMember::where('id', $id)->update([
             'name' => $request->name,
             'role' => $request->role,
@@ -359,14 +377,15 @@ class StaffController extends Controller
             'end_date' => $request->resign_date != null ? date('Y-m-d', strtotime($request->resign_date)) : null
         ]);
 
-        if($updateTeam) {
+        if ($updateTeam) {
             return redirect()->route('staff.teams', $staff_id)->with(['success' => true, 'message' => 'Staff member updated successfully!']);
         } else {
             return redirect()->route('staff.teams', $staff_id)->with(['error'  => true, 'message' => 'Something went wrong!']);
         }
     }
 
-    public function staffMemberDelete(string $id) {
+    public function staffMemberDelete(string $id)
+    {
 
         $deleteStaffMember = StaffMember::where('id', $id)->delete();
 
@@ -377,8 +396,9 @@ class StaffController extends Controller
         }
     }
 
-    public function generateAttendancePdf(Request $request) {
-        
+    public function generateAttendancePdf(Request $request)
+    {
+
         $reportrange = $request->reportrange;
         $startDate = null;
         $endDate = null;
@@ -402,12 +422,12 @@ class StaffController extends Controller
         $attendanceQuery = DailyAttendance::with('staff')->whereIn('attendance_date', $dates);
         $membersQuery = StaffMember::orderBy('id', 'DESC');
 
-        if($staff_member) {
+        if ($staff_member) {
             $attendanceQuery->where('staff_member_id', $staff_member);
             $membersQuery->where('id', $staff_member);
         }
 
-        if($leader_id) {
+        if ($leader_id) {
             $attendanceQuery->where('staff_id', $leader_id);
             $membersQuery->where('staff_id', $leader_id);
             $leader = Staff::where('is_leader', 1)->where('id', $leader_id)->first();
@@ -429,10 +449,10 @@ class StaffController extends Controller
                 $staffTotal[$memberId] = 0;
             }
 
-            if($attendance->status == 0) {
+            if ($attendance->status == 0) {
                 $staffTotal[$memberId] += $attendance->staff->rate_per_day;
             }
-            if($attendance->status == 2) {
+            if ($attendance->status == 2) {
                 $staffTotal[$memberId] += $attendance->staff->rate_per_day / 2;
             }
 

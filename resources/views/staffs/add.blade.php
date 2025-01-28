@@ -49,7 +49,7 @@
                             <div class="team-detail d-none col-md-6">
                                 <div class="form-group">
                                     <label class="">Labour Numbers <span class="text-danger">*</span> </label>
-                                    <input class="form-control" name="labour_no" id="labour_no" type="number" value="">
+                                    <input class="form-control" name="labour_number" id="labour_number" type="number">
                                 </div>
                             </div>
                         </div>
