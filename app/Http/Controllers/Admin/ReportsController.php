@@ -143,7 +143,7 @@ class ReportsController extends Controller
             'Diesel Entries' => DieselEntry::sum('amount'),
             'Staff Salaries' => Staff::sum('salary'),
             'Vehicle Services' => VehicleService::sum('price'),
-            'Bills' => Bill::where('status', 'paid')->sum('amount'),
+            // 'Bills' => Bill::where('status', 'paid')->sum('amount'),
             'Infrastructure' => Infrastructure::sum('amount'),
             'Cameras' => Camera::sum('amount'),
             'Fertilizer & Pesticides' => FertilizerPesticide::sum('price'),
@@ -175,7 +175,7 @@ class ReportsController extends Controller
             DieselEntry::whereMonth('created_at', $month)->sum('amount') +
             Staff::whereMonth('created_at', $month)->sum('salary') +
             VehicleService::whereMonth('created_at', $month)->sum('price') +
-            Bill::where('status', 'paid')->whereMonth('created_at', $month)->sum('amount') +
+            // Bill::where('status', 'paid')->whereMonth('created_at', $month)->sum('amount') +
             Infrastructure::whereMonth('created_at', $month)->sum('amount') +
             Camera::whereMonth('created_at', $month)->sum('amount') +
             FertilizerPesticide::whereMonth('created_at', $month)->sum('price') +
@@ -190,7 +190,7 @@ class ReportsController extends Controller
             DieselEntry::whereYear('created_at', $year)->sum('amount') +
             Staff::whereYear('created_at', $year)->sum('salary') +
             VehicleService::whereYear('created_at', $year)->sum('price') +
-            Bill::where('status', 'paid')->whereYear('created_at', $year)->sum('amount') +
+            // Bill::where('status', 'paid')->whereYear('created_at', $year)->sum('amount') +
             Infrastructure::whereYear('created_at', $year)->sum('amount') +
             Camera::whereYear('created_at', $year)->sum('amount') +
             FertilizerPesticide::whereYear('created_at', $year)->sum('price') +
@@ -214,7 +214,7 @@ class ReportsController extends Controller
             'Diesel Entries' => DieselEntry::query(),
             'Staff Salaries' => Staff::query(),
             'Vehicle Services' => VehicleService::query(),
-            'Bills' => Bill::where('status', 'paid'),
+            // 'Bills' => Bill::where('status', 'paid'),
             'Infrastructure' => Infrastructure::query(),
             'Cameras' => Camera::query(),
             'Fertilizer & Pesticides' => FertilizerPesticide::query(),
@@ -244,7 +244,7 @@ class ReportsController extends Controller
                 'Staff Salaries' => 'salary',
                 'Vehicle Services' => 'price',
                 'Infrastructure', 'Cameras' => 'amount',
-                'Bills' => 'amount',
+                // 'Bills' => 'amount',
                 'Expenses' => 'amount',
             };
 
@@ -279,7 +279,7 @@ class ReportsController extends Controller
             'Diesel Entries' => DieselEntry::query(),
             'Staff Salaries' => Staff::query(),
             'Vehicle Services' => VehicleService::query(),
-            'Bills' => Bill::where('status', 'paid'),
+            // 'Bills' => Bill::where('status', 'paid'),
             'Infrastructure' => Infrastructure::query(),
             'Cameras' => Camera::query(),
             'Fertilizer & Pesticides' => FertilizerPesticide::query(),
@@ -307,7 +307,7 @@ class ReportsController extends Controller
                 'Staff Salaries' => 'salary',
                 'Vehicle Services' => 'price',
                 'Infrastructure', 'Cameras' => 'amount',
-                'Bills' => 'amount',
+                // 'Bills' => 'amount',
                 'Expenses' => 'amount',
             };
 

@@ -46,7 +46,15 @@
                                 <label class="rdiobox d-inline-block mr-4" for="single"><input type="radio" class="staff_leader" name="staff_leader" value="0" id="single" checked> <span>Single staff</span></label>
                                 <label class="rdiobox d-inline-block" for="leader"><input type="radio" class="staff_leader" name="staff_leader" value="1" id="leader"> <span>Leader</span></label>
                             </div>
+                            <div class="team-detail d-none col-md-6">
+                                <div class="form-group">
+                                    <label class="">Labour Numbers <span class="text-danger">*</span> </label>
+                                    <input class="form-control" name="labour_no" id="labour_no" type="number" value="">
+                                </div>
+                            </div>
                         </div>
+
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="">Name <span class="text-danger">*</span> </label>
@@ -83,7 +91,7 @@
                                 </ul> @enderror
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="date">Joining date</label>
@@ -123,7 +131,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row team-detail d-none" id="team-row-0">
+                    {{-- <div class="row team-detail d-none" id="team-row-0">
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label class="">Staff Name <span class="text-danger">*</span> </label>
@@ -168,7 +176,7 @@
                                 <button type="button" class="btn btn-danger remove-row mt-4" data-index="0">-</button>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="row row-sm mt-4">
                         <div class="col-md-12 col-lg-12 col-xl-12">

@@ -98,7 +98,7 @@ class DashboardController extends Controller
             Diesel::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('total_price'),
             DieselEntry::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
             Water::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('price'),
-            Bill::where('status', 'paid')->whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
+            // Bill::where('status', 'paid')->whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
             Expense::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
             Infrastructure::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
             Camera::whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->sum('amount'),
