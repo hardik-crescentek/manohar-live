@@ -595,6 +595,7 @@ class ReportsController extends Controller
     // Plants report
     public function plantIndex(Request $request)
     {
+
         $totalPlants = Plant::sum('price');
         $data['totalPlants'] = $totalPlants;
 
@@ -608,6 +609,13 @@ class ReportsController extends Controller
         $currentYearPlants = Plant::whereYear('date', date('Y'))->sum('price');
         $data['currentYearPlants'] = $currentYearPlants;
 
+        $nurseries = Plant::select('nursery')
+            ->groupBy('nursery')
+            ->pluck('nursery')
+            ->toArray();
+
+        $data['nursery'] = $nurseries;
+
         return view('reports.plant', $data);
     }
 
@@ -615,6 +623,7 @@ class ReportsController extends Controller
     {
         $startDate = $request->startDate;
         $endDate = $request->endDate;
+        $nurseryName = $request->nursery_id;
 
         $query = Plant::orderBy('id', 'desc');
 
@@ -624,10 +633,14 @@ class ReportsController extends Controller
             $query->whereBetween('date', [$from, $to]);
         }
 
+        if ($nurseryName) {
+            $query->where('nursery', $nurseryName);
+        }
+
         $plants = $query->get();
         $data['plants'] = $plants;
-
-        return View::make('reports.Ajax.plant', $data);
+        echo $plants;
+        // return View::make('reports.Ajax.plant', $data);
     }
 
     public function generatePlantPdf(Request $request)

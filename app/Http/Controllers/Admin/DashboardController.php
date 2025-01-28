@@ -18,6 +18,7 @@ use App\Models\VehicleService;
 use App\Models\Water;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use stdClass;
 
@@ -31,6 +32,14 @@ class DashboardController extends Controller
 
         $plantsCount = Plant::count();
         $data['plantsCount'] = $plantsCount;
+
+        $plantsByType = Plant::select('name', DB::raw('SUM(quantity) as total_quantity'))
+            ->groupBy('name')
+            ->get()
+            ->keyBy('name')
+            ->toArray();
+
+        $data['plantsByType'] = $plantsByType;
 
         $totalExpense = Expense::sum('amount');
         $data['totalExpense'] = $totalExpense;
@@ -105,6 +114,8 @@ class DashboardController extends Controller
         ])->reduce(fn($carry, $item) => $carry + $item, 0);
 
         $data['totalExpenses'] = number_format($totalExpenses, 2);
+
+        // dd(Plant::select()->get());
 
 
         if (Auth::user()->hasrole('super-admin')) {
