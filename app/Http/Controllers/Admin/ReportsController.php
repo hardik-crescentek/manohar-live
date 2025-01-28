@@ -634,13 +634,13 @@ class ReportsController extends Controller
         }
 
         if ($nurseryName) {
-            $query->where('nursery', $nurseryName);
+            $query->where('nursery', '=', strtolower($nurseryName));
         }
 
         $plants = $query->get();
         $data['plants'] = $plants;
-        echo $plants;
-        // return View::make('reports.Ajax.plant', $data);
+
+        return View::make('reports.Ajax.plant', $data);
     }
 
     public function generatePlantPdf(Request $request)
