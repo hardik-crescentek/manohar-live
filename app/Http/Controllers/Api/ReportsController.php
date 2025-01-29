@@ -1035,21 +1035,18 @@ class ReportsController extends Controller
     public function getPlotPdf(Request $request)
     {
         try {
-            // Extract filters from the request
             $category = $request->category;
             $landId = $request->land_id;
-            $startDate = $request->startDate; // Extract startDate
-            $endDate = $request->endDate; // Extract endDate
+            $startDate = $request->startDate;
+            $endDate = $request->endDate;
 
-            // Validate and format the start and end dates
             if ($startDate) {
-                $startDate = date('Y-m-d', strtotime($startDate)); // Format start date
+                $startDate = date('Y-m-d', strtotime($startDate));
             }
             if ($endDate) {
-                $endDate = date('Y-m-d', strtotime($endDate)); // Format end date
+                $endDate = date('Y-m-d', strtotime($endDate));
             }
 
-            // Initialize query and fetch data based on category
             $entries = collect();
             if ($category === 'water') {
                 $entries = WaterEntry::with('land')
@@ -1068,20 +1065,17 @@ class ReportsController extends Controller
                     ->get();
             }
 
-            // Fetch land details if landId is provided
             $landDetail = $landId ? Land::find($landId) : null;
 
-            // Total calculation based on category
             $total = 0;
             if ($category === 'water') {
-                $total = $entries->sum('volume'); // Adjust as per requirement
+                $total = $entries->sum('volume');
             } elseif ($category === 'fertilizer') {
-                $total = $entries->sum('quantity'); // Adjust as per requirement
+                $total = $entries->sum('quantity');
             } else {
                 $total = $entries->sum('size');
             }
 
-            // Prepare data for the view
             $data = [
                 'category' => $category,
                 'entries' => $entries,
@@ -1091,7 +1085,6 @@ class ReportsController extends Controller
                 'total' => $total,
             ];
 
-            // Generate a dynamic filename
             $filename = 'Plot_Report_' . ucfirst($category);
             if ($landDetail) {
                 $filename .= '_Land_' . str_replace(' ', '_', $landDetail->name);
@@ -1101,11 +1094,16 @@ class ReportsController extends Controller
             }
             $filename .= '.pdf';
 
-            // Generate PDF and return download
             $pdf = PDF::loadView('reports.Pdf.plot', $data);
 
-            // Download the generated PDF file
-            return $pdf->download($filename);
+            $path = public_path('reports/' . $filename);
+            $pdf->save($path);
+
+            $url = url('reports/' . $filename);
+            $data = ['url' => $url];
+
+            return response()->json(['status' => 200, 'data' => $data], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 500,
