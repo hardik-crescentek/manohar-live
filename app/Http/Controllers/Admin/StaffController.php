@@ -180,21 +180,47 @@ class StaffController extends Controller
         }
     }
 
+    // public function getTable(Request $request)
+    // {
+
+    //     $type = $request->type;
+
+    //     $query = Staff::orderBy('id', 'desc');
+
+    //     if (isset($type) && $type != 0) {
+    //         $query->where('type', $type);
+    //     }
+
+    //     $staffs = $query->get();
+    //     $data['staffs'] = $staffs;
+    //     return View::make('staffs.Ajax.table', $data);
+    // }
+
     public function getTable(Request $request)
-    {
+{
+    $type = $request->type;
 
-        $type = $request->type;
+    $query = Staff::orderBy('id', 'desc');
 
-        $query = Staff::orderBy('id', 'desc');
-
-        if (isset($type) && $type != 0) {
-            $query->where('type', $type);
-        }
-
-        $staffs = $query->get();
-        $data['staffs'] = $staffs;
-        return View::make('staffs.Ajax.table', $data);
+    if (isset($type) && $type != 0) {
+        $query->where('type', $type);
     }
+
+    $staffs = $query->get();
+
+    $staffs->map(function ($staff) {
+        // Calculate working days
+        $joiningDate = $staff->joining_date ? \Carbon\Carbon::parse($staff->joining_date) : null;
+        $resignDate = $staff->resign_date ? \Carbon\Carbon::parse($staff->resign_date) : \Carbon\Carbon::now();
+        $staff->working_days = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+
+        return $staff;
+    });
+
+    $data['staffs'] = $staffs;
+    return View::make('staffs.Ajax.table', $data);
+}
+
 
     public function teams($id)
     {
