@@ -1031,7 +1031,6 @@ class ReportsController extends Controller
         }
     }
 
-
     public function getPlotPdf(Request $request)
     {
         try {
@@ -1063,6 +1062,14 @@ class ReportsController extends Controller
                     ->when($startDate && $endDate, fn($query) => $query->whereBetween('date', [$startDate, $endDate]))
                     ->when($landId, fn($query) => $query->where('land_id', $landId))
                     ->get();
+            }
+
+            if ($entries->isEmpty()) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'No data found',
+                    'data' => [],
+                ], 404);
             }
 
             $landDetail = $landId ? Land::find($landId) : null;
