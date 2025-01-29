@@ -81,10 +81,21 @@
                 <div class="card-body">
                     <a class="card-order" href="{{ route('plants.index') }}">
                         <label class="main-content-label mb-3 pt-1">Total Plants</label>
-                        <h2 class="text-right"><i class="mdi mdi-cube icon-size float-left text-primary"></i><span
-                                class="font-weight-bold">{{ $plantsCount }}</span></h2>
-                        <p class="mb-0 mt-4 text-muted"> - <span class="float-right"> </span></p>
+                        <h2 class="text-right"><i class="mdi mdi-cube icon-size float-left text-primary"></i><span class="font-weight-bold">{{ $plantsCount }}</span></h2>
+                        {{-- <p class="mb-0 mt-4 text-muted"> - <span class="float-right"></span></p> --}}
                     </a>
+                    <div class="mt-4">
+                        @foreach ($plantsByType as $type => $plant)
+                            <div class="row mb-1 text-muted">
+                                <div class="col-8">
+                                    <strong>{{ $type }}</strong>
+                                </div>
+                                <div class="col-4 text-right">
+                                    {{ $plant['total_quantity'] }}
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </div>

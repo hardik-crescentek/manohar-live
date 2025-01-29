@@ -13,7 +13,15 @@
         getTable(startDate, endDate);
     });
 
+    $('#nursery_id').change(function() {
+        var startDate = $('#reportrange').data('daterangepicker').startDate.format('YYYY-MM-DD');;
+        var endDate = $('#reportrange').data('daterangepicker').endDate.format('YYYY-MM-DD');;
+        getTable(startDate, endDate);
+    });
+
     function getTable(startDate, endDate) {
+
+        var nursery_id = $('#nursery_id').find(':selected').val();
 
         $.ajax({
             url: "{{ route('plants-reports.get-table') }}",
@@ -21,7 +29,8 @@
             data: {
                 _token: '{{ csrf_token() }}',
                 startDate: startDate,
-                endDate: endDate
+                endDate: endDate,
+                nursery_id: nursery_id
             },
             success: function(res) {
                 $('#plants-container').html(res);
@@ -47,7 +56,8 @@
                 'Last 7 Days': [moment().subtract(6, 'days'), moment()],
                 'Last 30 Days': [moment().subtract(29, 'days'), moment()],
                 'This Month': [moment().startOf('month'), moment().endOf('month')],
-                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1,
+                    'month').endOf('month')]
             }
         }, cb);
 
