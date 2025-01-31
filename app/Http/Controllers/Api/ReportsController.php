@@ -747,96 +747,96 @@ class ReportsController extends Controller
 
     public function getStaffsReport(Request $request)
     {
-
         try {
             $startDate = $request->start_date;
             $endDate = $request->end_date;
 
             $query = Staff::orderBy('id', 'desc');
 
-            if ($startDate != null && $endDate != null) {
+            if ($startDate && $endDate) {
                 $from = date('Y-m-d', strtotime($startDate));
                 $to = date('Y-m-d', strtotime($endDate));
 
                 $query->where(function ($query) use ($from, $to) {
-                    $query->where(function ($query) use ($from, $to) {
-                        $query->whereNull('resign_date')->whereDate('joining_date', '<=', $to);
-                    })->orWhere(function ($query) use ($from, $to) {
-                        $query->where('joining_date', '<=', $to)->where('resign_date', '>=', $from);
-                    });
+                    $query->whereNull('resign_date')->whereDate('joining_date', '<=', $to);
+                })->orWhere(function ($query) use ($from, $to) {
+                    $query->where('joining_date', '<=', $to)->where('resign_date', '>=', $from);
                 });
             }
 
-            if ($request->type != null) {
+            if ($request->type) {
                 $query->where('type', $request->type);
             }
 
-            $staff = $query->get();
-            $data['staff'] = $staff;
+            $staffs = $query->get();
 
-            return response()->json(['status' => 200, 'data' => $data], 200);
+            foreach ($staffs as $staff) {
+                $joiningDate = $staff->joining_date ? Carbon::parse($staff->joining_date) : null;
+                $resignDate = $staff->resign_date ? Carbon::parse($staff->resign_date) : Carbon::now();
+                $staff->working_days = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+                $staff->total_labour_payment = $staff->working_days * $staff->labour_number * $staff->rate_per_day;
+            }
+
+            return response()->json(['status' => 200, 'data' => ['staffs' => $staffs]], 200);
         } catch (\Exception $e) {
-            return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
+            return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
         }
     }
 
     public function getStaffsPdf(Request $request)
     {
-
         try {
             $startDate = $request->start_date;
             $endDate = $request->end_date;
 
             $query = Staff::orderBy('id', 'desc');
 
-            if ($startDate != null && $endDate != null) {
+            if ($startDate && $endDate) {
                 $from = date('Y-m-d', strtotime($startDate));
                 $to = date('Y-m-d', strtotime($endDate));
 
                 $query->where(function ($query) use ($from, $to) {
-                    $query->where(function ($query) use ($from, $to) {
-                        $query->whereNull('resign_date')->whereDate('joining_date', '<=', $to);
-                    })->orWhere(function ($query) use ($from, $to) {
-                        $query->where('joining_date', '<=', $to)->where('resign_date', '>=', $from);
-                    });
+                    $query->whereNull('resign_date')->whereDate('joining_date', '<=', $to);
+                })->orWhere(function ($query) use ($from, $to) {
+                    $query->where('joining_date', '<=', $to)->where('resign_date', '>=', $from);
                 });
-
-                $pdfData['from'] = date('d-m-Y', strtotime($startDate));
-                $pdfData['to'] = date('d-m-Y', strtotime($endDate));
             }
 
-            if ($request->type == 1 || $request->type == 2) {
+            if ($request->type) {
                 $query->where('type', $request->type);
-
-                if ($request->type == 1) {
-                    $pdfData['type'] = 'Salaried';
-                }
-                if ($request->type == 2) {
-                    $pdfData['type'] = 'On-demand';
-                }
             }
 
-            $staff = $query->get();
+            $staffs = $query->get();
 
-            if ($staff->isEmpty()) {
-                return response()->json(['status' => 404, 'message' => 'No data found', 'data' => []], 404);
+            if ($staffs->isEmpty()) {
+                return response()->json(['status' => 404, 'message' => 'No data found'], 404);
             }
 
-            $pdfData['staffs'] = $staff;
+            foreach ($staffs as $staff) {
+                $joiningDate = $staff->joining_date ? Carbon::parse($staff->joining_date) : null;
+                $resignDate = $staff->resign_date ? Carbon::parse($staff->resign_date) : Carbon::now();
+                $staff->working_days = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+                $staff->total_labour_payment = $staff->working_days * $staff->labour_number * $staff->rate_per_day;
+            }
+
+            $pdfData = [
+                'staffs' => $staffs,
+                'from' => $startDate ? date('d-m-Y', strtotime($startDate)) : null,
+                'to' => $endDate ? date('d-m-Y', strtotime($endDate)) : null,
+                'type' => $request->type == 1 ? 'Salaried' : ($request->type == 2 ? 'On-demand' : 'All'),
+            ];
 
             $pdf = PDF::loadView('reports.Pdf.staffs', $pdfData);
             $fileName = time() . '_staff_report.pdf';
             $path = public_path('reports/' . $fileName);
             $pdf->save($path);
 
-            $url = url('reports/' . $fileName);
-            $data['url'] = $url;
-
-            return response()->json(['status' => 200, 'data' => $data], 200);
+            return response()->json(['status' => 200, 'url' => url('reports/' . $fileName)], 200);
         } catch (\Exception $e) {
-            return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
+            return response()->json(['status' => 400, 'message' => $e->getMessage()], 400);
         }
     }
+
 
     public function getFertilizerReport(Request $request)
     {
