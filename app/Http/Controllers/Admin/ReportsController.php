@@ -777,16 +777,31 @@ class ReportsController extends Controller
         $query = Staff::orderBy('id', 'desc');
 
         if ($startDate != null && $endDate != null) {
-            $from = date($startDate);
-            $to = date($endDate);
+            $from = date('Y-m-d', strtotime($startDate));
+            $to = date('Y-m-d', strtotime($endDate));
             $query->whereBetween('joining_date', [$from, $to]);
         }
 
-        if (isset($request->type) && $request->type != '') {
+        if (!empty($request->type)) {
             $query->where('type', $request->type);
         }
 
         $staffs = $query->get();
+
+        // Process additional data fields
+        $staffs->transform(function ($staff) {
+            $joiningDate = $staff->joining_date ? \Carbon\Carbon::parse($staff->joining_date) : null;
+            $resignDate = $staff->resign_date ? \Carbon\Carbon::parse($staff->resign_date) : \Carbon\Carbon::now();
+
+            $workingDays = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+            $totalLabourPayment = $workingDays * $staff->labour_number * $staff->rate_per_day;
+
+            $staff->working_days = $workingDays;
+            $staff->total_labour_payment = $totalLabourPayment;
+
+            return $staff;
+        });
+
         $data['staffs'] = $staffs;
 
         return View::make('reports.Ajax.staffs', $data);
