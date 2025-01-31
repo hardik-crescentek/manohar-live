@@ -212,9 +212,7 @@ class ReportsController extends Controller
             'Water Expenses' => Water::query(),
             'Diesel' => Diesel::query(),
             'Diesel Entries' => DieselEntry::query(),
-            'Staff Salaries' => Staff::query(),
             'Vehicle Services' => VehicleService::query(),
-            // 'Bills' => Bill::where('status', 'paid'),
             'Infrastructure' => Infrastructure::query(),
             'Cameras' => Camera::query(),
             'Fertilizer & Pesticides' => FertilizerPesticide::query(),
@@ -227,7 +225,6 @@ class ReportsController extends Controller
             $endDate = Carbon::parse($endDate)->endOfDay();
 
             foreach ($models as $key => $query) {
-                // Adjust field for date filtering
                 $field = ($key === 'Expenses' || $key === 'Diesel') ? 'date' : 'created_at';
                 $models[$key] = $query->whereBetween($field, [$startDate, $endDate]);
             }
@@ -236,20 +233,32 @@ class ReportsController extends Controller
         // Calculate totals
         $totals = [];
         foreach ($models as $key => $query) {
-            // Adjust sum field for each model
             $sumField = match ($key) {
                 'Plants', 'Water Expenses', 'Fertilizer & Pesticides' => 'price',
                 'Diesel' => 'total_price',
                 'Diesel Entries' => 'amount',
-                'Staff Salaries' => 'salary',
                 'Vehicle Services' => 'price',
                 'Infrastructure', 'Cameras' => 'amount',
-                // 'Bills' => 'amount',
                 'Expenses' => 'amount',
             };
 
             $totals[$key] = $query->sum($sumField);
         }
+
+        // **Staff Salaries & On-Demand Wages Calculation**
+        $salariedTotal = Staff::where('type', 1)->sum('salary'); // Salaried staff total
+
+        // On-demand staff wages calculation
+        $onDemandTotal = Staff::where('type', 2)->get()->sum(function ($staff) {
+            $joiningDate = $staff->joining_date ? Carbon::parse($staff->joining_date) : null;
+            $resignDate = $staff->resign_date ? Carbon::parse($staff->resign_date) : Carbon::now();
+
+            $workingDays = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+            return $workingDays * $staff->rate_per_day * $staff->labour_number;
+        });
+
+        // Total Staff Expense (Salaried + On-Demand Wages)
+        $totals['Staff Salaries & Wages'] = $salariedTotal + $onDemandTotal;
 
         // Prepare data for rendering
         $data['headers'] = array_keys($totals);
@@ -260,26 +269,24 @@ class ReportsController extends Controller
 
     public function generateTotalExpensesPdf(Request $request)
     {
-        // Initialize date range variables
+        // Extract date range
         $reportrange = $request->reportrange;
         $startDate = null;
         $endDate = null;
 
-        if ($reportrange != '') {
-            $reportrangeAr = explode(' - ', $reportrange);
-            $startDate = $reportrangeAr[0];
-            $endDate = $reportrangeAr[1];
+        if (!empty($reportrange)) {
+            [$startDate, $endDate] = explode(' - ', $reportrange);
+            $startDate = Carbon::parse($startDate)->startOfDay();
+            $endDate = Carbon::parse($endDate)->endOfDay();
         }
 
-        // Prepare the query and totals for each category
+        // Define the models and queries
         $models = [
             'Plants' => Plant::query(),
             'Water Expenses' => Water::query(),
             'Diesel' => Diesel::query(),
             'Diesel Entries' => DieselEntry::query(),
-            'Staff Salaries' => Staff::query(),
             'Vehicle Services' => VehicleService::query(),
-            // 'Bills' => Bill::where('status', 'paid'),
             'Infrastructure' => Infrastructure::query(),
             'Cameras' => Camera::query(),
             'Fertilizer & Pesticides' => FertilizerPesticide::query(),
@@ -288,40 +295,47 @@ class ReportsController extends Controller
 
         // Apply date filter if provided
         if ($startDate && $endDate) {
-            $startDate = Carbon::parse($startDate)->startOfDay();
-            $endDate = Carbon::parse($endDate)->endOfDay();
-
             foreach ($models as $key => $query) {
                 $field = ($key === 'Expenses' || $key === 'Diesel') ? 'date' : 'created_at';
                 $models[$key] = $query->whereBetween($field, [$startDate, $endDate]);
             }
         }
 
-        // Calculate totals
+        // Calculate totals for each category
         $totals = [];
         foreach ($models as $key => $query) {
             $sumField = match ($key) {
                 'Plants', 'Water Expenses', 'Fertilizer & Pesticides' => 'price',
                 'Diesel' => 'total_price',
                 'Diesel Entries' => 'amount',
-                'Staff Salaries' => 'salary',
                 'Vehicle Services' => 'price',
                 'Infrastructure', 'Cameras' => 'amount',
-                // 'Bills' => 'amount',
                 'Expenses' => 'amount',
             };
 
             $totals[$key] = $query->sum($sumField);
         }
 
-        // Calculate the overall total expenses
+        // **Staff Salaries & On-Demand Wages Calculation**
+        $salariedTotal = Staff::where('type', 1)->sum('salary');
+        $onDemandTotal = Staff::where('type', 2)->get()->sum(function ($staff) {
+            $joiningDate = $staff->joining_date ? Carbon::parse($staff->joining_date) : null;
+            $resignDate = $staff->resign_date ? Carbon::parse($staff->resign_date) : Carbon::now();
+            $workingDays = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+            return $workingDays * $staff->rate_per_day * $staff->labour_number;
+        });
+
+        // Add staff expenses
+        $totals['Staff Salaries & Wages'] = $salariedTotal + $onDemandTotal;
+
+        // Calculate grand total
         $total = array_sum($totals);
 
-        // Prepare the data for the PDF view
+        // Prepare data for the PDF
         $data = [
             'totals' => $totals,
-            'from' => isset($startDate) ? $startDate->format('d-m-Y') : null,
-            'to' => isset($endDate) ? $endDate->format('d-m-Y') : null,
+            'from' => $startDate ? $startDate->format('d-m-Y') : null,
+            'to' => $endDate ? $endDate->format('d-m-Y') : null,
             'total' => $total,
         ];
 
@@ -329,6 +343,7 @@ class ReportsController extends Controller
         $pdf = PDF::loadView('reports.Pdf.totalexpenses', $data);
         return $pdf->download('total_expenses_report.pdf');
     }
+
 
 
     // water management
