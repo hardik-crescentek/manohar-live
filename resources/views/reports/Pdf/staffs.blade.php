@@ -1,5 +1,3 @@
-<!-- resources/views/pdf/table.blade.php -->
-
 <!DOCTYPE html>
 <html>
 
@@ -42,19 +40,16 @@
 
         .report-header td {
             border: 0px solid #000;
-            /* Add borders as needed */
         }
 
         .left-container,
         .right-container {
             vertical-align: top;
-            /* Align contents at the top */
         }
 
         .left-container p,
         .right-container p {
             margin: 0;
-            /* Remove default margins */
         }
 
         .left-container {
@@ -73,18 +68,18 @@
         <table class="report-header">
             <tr>
                 <td class="left-container">
-                    @if(isset($from))
-                    <p><strong>From date:</strong> {{ $from }}</p>
+                    @if (isset($from))
+                        <p><strong>From date:</strong> {{ $from }}</p>
                     @endif
-                    @if(isset($to))
-                    <p><strong>To date:</strong> {{ $to }}</p>
+                    @if (isset($to))
+                        <p><strong>To date:</strong> {{ $to }}</p>
                     @endif
                 </td>
                 <td class="right-container">
-                    @if(isset($type))
+                    @if (isset($type))
                         <p>Type: {{ $type }}</p>
                     @endif
-                    @if(isset($total))
+                    @if (isset($total))
                         <p><strong>Total:</strong> {{ number_format($total) }}</p>
                     @endif
                 </td>
@@ -97,23 +92,36 @@
                 <th>Id</th>
                 <th>Type</th>
                 <th>Name</th>
-                <th>Salary</th>
+                <th>Labour Number</th>
+                <th>Working Days</th>
+                <th>Total Labour Payment</th>
+                <th>Salary / Rate per Day</th>
             </tr>
         </thead>
         <tbody>
-            @if(isset($staffs) && !$staffs->isEmpty())
-            @foreach($staffs as $key => $item)
-            <tr>
-                <td>{{ $key + 1 }}</td>
-                <td>{{ $item->type == 1 ? 'Salaried' : 'On demand' }}</td>
-                <td>{{ $item->name }}</td>
-                <td>{{ $item->type == 1 ? $item->salary : $item->rate_per_day }}</td>
-            </tr>
-            @endforeach
+            @if (isset($staffs) && !$staffs->isEmpty())
+                @foreach ($staffs as $key => $item)
+                    @php
+                        $joiningDate = $item->joining_date ? \Carbon\Carbon::parse($item->joining_date) : null;
+                        $resignDate = $item->resign_date
+                            ? \Carbon\Carbon::parse($item->resign_date)
+                            : \Carbon\Carbon::now();
+                        $workingDays = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+                        $totalLabourPayment = $workingDays * $item->labour_number * $item->rate_per_day;
+                    @endphp
+                    <tr>
+                        <td>{{ $key + 1 }}</td>
+                        <td>{{ $item->type == 1 ? 'Salaried' : 'On demand' }}</td>
+                        <td>{{ $item->name }}</td>
+                        <td>{{ $item->labour_number }}</td>
+                        <td>{{ $workingDays }}</td>
+                        <td>{{ $totalLabourPayment }}</td>
+                        <td>{{ $item->type == 1 ? $item->salary : $item->rate_per_day }}</td>
+                    </tr>
+                @endforeach
             @endif
         </tbody>
     </table>
-
 </body>
 
 </html>
