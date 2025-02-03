@@ -14,15 +14,26 @@
     });
 
     $('#nursery_id').change(function() {
-        var startDate = $('#reportrange').data('daterangepicker').startDate.format('YYYY-MM-DD');;
-        var endDate = $('#reportrange').data('daterangepicker').endDate.format('YYYY-MM-DD');;
+        var startDate = $('#reportrange').data('daterangepicker').startDate.format('YYYY-MM-DD');
+        var endDate = $('#reportrange').data('daterangepicker').endDate.format('YYYY-MM-DD');
         getTable(startDate, endDate);
+    });
+
+    $(".plant-type").click(function() {
+        var dataType = $(this).data('type');
+        $("#plant_type").val(dataType);
+        getTable();
+    });
+
+    $(".all-type").click(function() {
+        $("#plant_type").val(null);
+        getTable();
     });
 
     function getTable(startDate, endDate) {
 
         var nursery_id = $('#nursery_id').find(':selected').val();
-
+        var type = $('#plant_type').val();
         $.ajax({
             url: "{{ route('plants-reports.get-table') }}",
             type: 'POST',
@@ -30,7 +41,8 @@
                 _token: '{{ csrf_token() }}',
                 startDate: startDate,
                 endDate: endDate,
-                nursery_id: nursery_id
+                nursery_id: nursery_id,
+                type: type
             },
             success: function(res) {
                 $('#plants-container').html(res);

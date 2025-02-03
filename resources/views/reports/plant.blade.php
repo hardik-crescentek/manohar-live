@@ -7,6 +7,12 @@
     <link href="{{ URL::asset('assets/plugins/datatable/responsivebootstrap4.min.css') }}" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/daterangepicker/daterangepicker.css') }}" />
+
+    <style>
+        .plant-type {
+          cursor: pointer;
+        }
+      </style>
 @endsection
 @section('content')
 
@@ -74,6 +80,27 @@
                         <h2 class="text-right"><i class="mdi mdi-flower icon-size float-left text-primary"></i><span
                                 class="font-weight-bold">₹{{ $currentYearPlants }}</span></h2>
                         <p class="mb-0 mt-4 text-muted"> - <span class="float-right"> </span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12 col-md-6 col-lg-6 col-xl-3">
+            <div class="card custom-card">
+                <div class="card-body" >
+                        <label class="main-content-label mb-3 pt-1">Total Plants</label>
+                        <h2 class="text-right all-type"><i class="mdi mdi-cube icon-size float-left text-primary"></i><span class="font-weight-bold">{{ $plantsCount }}</span></h2>
+                    <div class="mt-4">
+                        @foreach ($plantsByType as $type => $plant)
+                            <div class="row mb-1 text-muted plant-row" data-type="{{ $type }}">
+                                <div class="col-8">
+                                    <strong class="plant-type" data-type="{{ $type }}">{{ $type }}</strong>
+                                    <input type="hidden" id="plant_type">
+                                </div>
+                                <div class="col-4 text-right">
+                                    {{ $plant['total_quantity'] }}
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -149,4 +176,6 @@
     <script type="text/javascript" src="{{ asset('assets/plugins/daterangepicker/daterangepicker.min.js') }}"></script>
 
     @include('reports.JS.plant_js')
+
+
 @endsection

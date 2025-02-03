@@ -115,9 +115,6 @@ class DashboardController extends Controller
 
         $data['totalExpenses'] = number_format($totalExpenses, 2);
 
-        // dd(Plant::select()->get());
-
-
         if (Auth::user()->hasrole('super-admin')) {
             return view('dashboard.super-admin', $data);
         } else {

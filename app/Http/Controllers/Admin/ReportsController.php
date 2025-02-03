@@ -23,6 +23,7 @@ use App\Models\WaterEntry;
 use Carbon\Carbon;
 use PDF;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
 
 class ReportsController extends Controller
@@ -628,8 +629,17 @@ class ReportsController extends Controller
             ->groupBy('nursery')
             ->pluck('nursery')
             ->toArray();
-
         $data['nursery'] = $nurseries;
+
+        $plantsByType = Plant::select('name', DB::raw('SUM(quantity) as total_quantity'))
+            ->groupBy('name')
+            ->get()
+            ->keyBy('name')
+            ->toArray();
+        $data['plantsByType'] = $plantsByType;
+
+        $plantsCount = Plant::count();
+        $data['plantsCount'] = $plantsCount;
 
         return view('reports.plant', $data);
     }
@@ -639,6 +649,7 @@ class ReportsController extends Controller
         $startDate = $request->startDate;
         $endDate = $request->endDate;
         $nurseryName = $request->nursery_id;
+        $plantType = $request->type;
 
         $query = Plant::orderBy('id', 'desc');
 
@@ -650,6 +661,10 @@ class ReportsController extends Controller
 
         if ($nurseryName) {
             $query->where('nursery', '=', strtolower($nurseryName));
+        }
+
+        if($plantType){
+            $query->where('name', '=', strtolower($plantType));
         }
 
         $plants = $query->get();
