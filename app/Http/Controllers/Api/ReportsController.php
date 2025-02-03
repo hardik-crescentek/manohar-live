@@ -725,10 +725,10 @@ class ReportsController extends Controller
 
     public function getPlantsPdf(Request $request)
     {
-
         try {
             $startDate = $request->start_date;
             $endDate = $request->end_date;
+            $nursery = $request->nursery;
 
             $query = Plant::orderBy('id', 'desc');
             if ($startDate != null && $endDate != null) {
@@ -738,6 +738,10 @@ class ReportsController extends Controller
 
                 $pdfData['from'] = date('d-m-Y', strtotime($startDate));
                 $pdfData['to'] = date('d-m-Y', strtotime($endDate));
+            }
+
+            if ($nursery) {
+                $query->where('nursery', '=', strtolower($nursery));
             }
 
             $plants = $query->get();
