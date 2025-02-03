@@ -97,6 +97,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('reports/get-bill-report', [ReportsController::class, 'getBillReport']);
     Route::post('reports/get-bill-pdf', [ReportsController::class, 'getBillPdf']);
 
+    // route added
+    Route::get('reports/get-plants-nursery', [ReportsController::class, 'getPlantNursery']);
+
     Route::post('reports/get-plants-report', [ReportsController::class, 'getPlantsReport']);
     Route::post('reports/get-plants-pdf', [ReportsController::class, 'getPlantsPdf']);
 
