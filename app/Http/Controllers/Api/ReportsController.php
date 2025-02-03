@@ -362,7 +362,7 @@ class ReportsController extends Controller
             'Diesel Entries' => DieselEntry::query(),
             'Staff Salaries' => Staff::query(),
             'Vehicle Services' => VehicleService::query(),
-            'Bills' => Bill::where('status', 'paid'),
+            // 'Bills' => Bill::where('status', 'paid'),
             'Infrastructure' => Infrastructure::query(),
             'Cameras' => Camera::query(),
             'Fertilizer & Pesticides' => FertilizerPesticide::query(),
@@ -391,7 +391,7 @@ class ReportsController extends Controller
             'Staff Salaries' => 'salary',
             'Vehicle Services' => 'price',
             'Infrastructure', 'Cameras' => 'amount',
-            'Bills', 'Expenses' => 'amount',
+            // 'Bills', 'Expenses' => 'amount',
         };
     }
 

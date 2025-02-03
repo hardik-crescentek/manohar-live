@@ -12,10 +12,41 @@ class StaffController extends Controller
     /**
      * Display a listing of the resource.
      */
+    // public function index()
+    // {
+    //     try {
+    //         $staffs = Staff::orderBy('id', 'desc')->get();
+    //         $totalStaff = Staff::count();
+    //         $totalSalariedStaff = Staff::where('type', 1)->count();
+    //         $totalOndemandStaff = Staff::where('type', 2)->count();
+
+    //         $data['totalStaff'] = $totalStaff;
+    //         $data['totalSalariedStaff'] = $totalSalariedStaff;
+    //         $data['totalOndemandStaff'] = $totalOndemandStaff;
+    //         $data['staffs'] = $staffs;
+
+    //         return response()->json(['status' => 200, 'data' => $data], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
+    //     }
+    // }
+
     public function index()
     {
         try {
-            $staffs = Staff::orderBy('id', 'desc')->get();
+            $staffs = Staff::orderBy('id', 'desc')->get()->map(function ($staff) {
+                $joiningDate = $staff->joining_date ? \Carbon\Carbon::parse($staff->joining_date) : null;
+                $resignDate = $staff->resign_date ? \Carbon\Carbon::parse($staff->resign_date) : \Carbon\Carbon::now();
+
+                $workingDays = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+                $totalLabourPayment = $workingDays * $staff->labour_number * $staff->rate_per_day;
+
+                $staff->working_days = $workingDays;
+                $staff->total_labour_payment = $totalLabourPayment;
+
+                return $staff;
+            });
+
             $totalStaff = Staff::count();
             $totalSalariedStaff = Staff::where('type', 1)->count();
             $totalOndemandStaff = Staff::where('type', 2)->count();
@@ -62,10 +93,10 @@ class StaffController extends Controller
             $createStaff->address = $request->address;
             $createStaff->salary = $request->type == 1 ? $request->salary : null;
             $createStaff->rate_per_day = $request->type == 2 ? $request->rate_per_day : null;
-            if($request->joining_date != null) {
+            if ($request->joining_date != null) {
                 $createStaff->joining_date = date('Y-m-d', strtotime($request->joining_date));
             }
-            if($request->resign_date != null) {
+            if ($request->resign_date != null) {
                 $createStaff->resign_date = date('Y-m-d', strtotime($request->resign_date));
             }
             if ($request->type == 2 || $request->staff_leader == 1) {
@@ -82,6 +113,21 @@ class StaffController extends Controller
     /**
      * Display the specified resource.
      */
+    // public function show(string $id)
+    // {
+    //     try {
+    //         $staff = Staff::find($id);
+
+    //         if (!$staff) {
+    //             throw new \Exception('Staff not found');
+    //         }
+
+    //         return response()->json(['status' => 200, 'data' => $staff], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['status' => 404, 'message' => $e->getMessage(), 'data' => []], 404);
+    //     }
+    // }
+
     public function show(string $id)
     {
         try {
@@ -91,11 +137,21 @@ class StaffController extends Controller
                 throw new \Exception('Staff not found');
             }
 
+            $joiningDate = $staff->joining_date ? \Carbon\Carbon::parse($staff->joining_date) : null;
+            $resignDate = $staff->resign_date ? \Carbon\Carbon::parse($staff->resign_date) : \Carbon\Carbon::now();
+
+            $workingDays = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+            $totalLabourPayment = $workingDays * $staff->labour_number * $staff->rate_per_day;
+
+            $staff->working_days = $workingDays;
+            $staff->total_labour_payment = $totalLabourPayment;
+
             return response()->json(['status' => 200, 'data' => $staff], 200);
         } catch (\Exception $e) {
             return response()->json(['status' => 404, 'message' => $e->getMessage(), 'data' => []], 404);
         }
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -122,10 +178,10 @@ class StaffController extends Controller
             $updateStaff->address = $request->address;
             $updateStaff->salary = $request->type == 1 ? $request->salary : null;
             $updateStaff->rate_per_day = $request->type == 2 ? $request->rate_per_day : null;
-            if($request->joining_date != null) {
+            if ($request->joining_date != null) {
                 $updateStaff->joining_date = date('Y-m-d', strtotime($request->joining_date));
             }
-            if($request->resign_date != null) {
+            if ($request->resign_date != null) {
                 $updateStaff->resign_date = date('Y-m-d', strtotime($request->resign_date));
             }
             if ($request->type == 2 || $request->staff_leader == 1) {
