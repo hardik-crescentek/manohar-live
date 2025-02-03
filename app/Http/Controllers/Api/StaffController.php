@@ -169,7 +169,12 @@ class StaffController extends Controller
                 throw new \Exception($validator->errors()->first());
             }
 
-            $updateStaff = Staff::where('id', $id)->first();
+            $updateStaff = Staff::find($id);
+            if (!$updateStaff) {
+                throw new \Exception('Staff not found');
+            }
+
+            // Update basic staff details
             $updateStaff->type = $request->type;
             $updateStaff->role = $request->role;
             $updateStaff->name = $request->name;
@@ -178,22 +183,37 @@ class StaffController extends Controller
             $updateStaff->address = $request->address;
             $updateStaff->salary = $request->type == 1 ? $request->salary : null;
             $updateStaff->rate_per_day = $request->type == 2 ? $request->rate_per_day : null;
-            if ($request->joining_date != null) {
+
+            if ($request->joining_date) {
                 $updateStaff->joining_date = date('Y-m-d', strtotime($request->joining_date));
             }
-            if ($request->resign_date != null) {
+            if ($request->resign_date) {
                 $updateStaff->resign_date = date('Y-m-d', strtotime($request->resign_date));
             }
+
+            // Update labour details
             if ($request->type == 2 || $request->staff_leader == 1) {
                 $updateStaff->labour_number = $request->labour_number;
             }
+
+            // Calculate working days and total labour payment
+            // $joiningDate = $updateStaff->joining_date ? \Carbon\Carbon::parse($updateStaff->joining_date) : null;
+            // $resignDate = $updateStaff->resign_date ? \Carbon\Carbon::parse($updateStaff->resign_date) : \Carbon\Carbon::now();
+
+            // $workingDays = $joiningDate ? $joiningDate->diffInDays($resignDate) : 0;
+            // $totalLabourPayment = $workingDays * $updateStaff->labour_number * $updateStaff->rate_per_day;
+
+            // $updateStaff->working_days = $workingDays;
+            // $updateStaff->total_labour_payment = $totalLabourPayment;
+
+            // Save the updates
             $updateStaff->save();
 
-            if ($request->image != '') {
-                $staff = Staff::find($id);
-                $fileName = apiFileUpload('staffs', $request->image, $staff->image ?? null);
-                $staff->image = $fileName;
-                $staff->save();
+            // Handle image update
+            if ($request->hasFile('image')) {
+                $fileName = apiFileUpload('staffs', $request->image, $updateStaff->image ?? null);
+                $updateStaff->image = $fileName;
+                $updateStaff->save();
             }
 
             return response()->json(['status' => 200, 'message' => 'Staff updated successfully!', 'data' => $updateStaff], 200);
@@ -201,6 +221,7 @@ class StaffController extends Controller
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
     }
+
 
     /**
      * Remove the specified resource from storage.

@@ -69,22 +69,22 @@ class StaffController extends Controller
         // dd($createStaff);
         $createStaff->save();
 
-        // if($request->staff_leader == 1 && $request->team_name != null) {
+        if($request->staff_leader == 1 && $request->team_name != null) {
 
-        //     foreach($request->team_name as $key => $teamname) {
+            foreach($request->team_name as $key => $teamname) {
 
-        //         if(isset($request->team_name[$key]) && $request->team_name[$key] != '') {
+                if(isset($request->team_name[$key]) && $request->team_name[$key] != '') {
 
-        //             $createTeam = StaffMember::create([
-        //                 'staff_id' => $createStaff->id,
-        //                 'name' => $request->team_name[$key],
-        //                 'role' => $request->team_role[$key],
-        //                 'join_date' => $request->team_joindate[$key] != null ? date('Y-m-d', strtotime($request->team_joindate[$key])) : null,
-        //                 'end_date' => $request->team_enddate[$key] != null ? date('Y-m-d', strtotime($request->team_enddate[$key])) : null
-        //             ]);
-        //         }
-        //     }
-        // }
+                    $createTeam = StaffMember::create([
+                        'staff_id' => $createStaff->id,
+                        'name' => $request->team_name[$key],
+                        'role' => $request->team_role[$key],
+                        'join_date' => $request->team_joindate[$key] != null ? date('Y-m-d', strtotime($request->team_joindate[$key])) : null,
+                        'end_date' => $request->team_enddate[$key] != null ? date('Y-m-d', strtotime($request->team_enddate[$key])) : null
+                    ]);
+                }
+            }
+        }
 
         if ($createStaff) {
             return redirect()->route('staffs.index')->with(['success' => true, 'message' => 'Staff added successfully!']);
@@ -257,6 +257,7 @@ class StaffController extends Controller
         $data['date'] = $date;
         $data['type'] = $type;
 
+        // dd($data);
         return View::make('staffs.Ajax.attendance_table', $data);
     }
 

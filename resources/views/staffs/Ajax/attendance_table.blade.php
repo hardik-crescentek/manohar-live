@@ -83,7 +83,7 @@
                         @elseif($attendance->staff)
                             {{ $attendance->staff->end_date ? $attendance->staff->end_date->format('d-m-Y') : 'Present' }}
                         @else
-                            
+
                         @endif
                     </td>
                     <td>
