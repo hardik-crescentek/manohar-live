@@ -68,6 +68,9 @@ class StaffController extends Controller
             if($request->resign_date != null) {
                 $createStaff->resign_date = date('Y-m-d', strtotime($request->resign_date));
             }
+            if ($request->type == 2 || $request->staff_leader == 1) {
+                $createStaff->labour_number = $request->labour_number;
+            }
             $createStaff->save();
 
             return response()->json(['status' => 200, 'message' => 'Staff added successfully!', 'data' => $createStaff], 200);
@@ -124,6 +127,9 @@ class StaffController extends Controller
             }
             if($request->resign_date != null) {
                 $updateStaff->resign_date = date('Y-m-d', strtotime($request->resign_date));
+            }
+            if ($request->type == 2 || $request->staff_leader == 1) {
+                $updateStaff->labour_number = $request->labour_number;
             }
             $updateStaff->save();
 
