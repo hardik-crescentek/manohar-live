@@ -689,12 +689,17 @@ class ReportsController extends Controller
         try {
             $startDate = $request->start_date;
             $endDate = $request->end_date;
+            $nursery = $request->nursery;
 
             $query = Plant::orderBy('id', 'desc');
             if ($startDate != null && $endDate != null) {
                 $from = date('Y-m-d', strtotime($startDate));
                 $to = date('Y-m-d', strtotime($endDate));
                 $query->whereBetween('date', [$from, $to]);
+            }
+
+            if($nursery) {
+                $query->where('nursery', '=', strtolower($nursery));
             }
 
             $plants = $query->get();
