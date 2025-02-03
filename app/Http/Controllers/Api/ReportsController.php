@@ -698,7 +698,7 @@ class ReportsController extends Controller
                 $query->whereBetween('date', [$from, $to]);
             }
 
-            if($nursery) {
+            if ($nursery) {
                 $query->where('nursery', '=', strtolower($nursery));
             }
 
@@ -709,6 +709,18 @@ class ReportsController extends Controller
         } catch (\Exception $e) {
             return response()->json(['status' => 400, 'message' => $e->getMessage(), 'data' => []], 400);
         }
+    }
+
+    public function getPlantNursery()
+    {
+        $nurseries = Plant::select('nursery')
+            ->groupBy('nursery')
+            ->pluck('nursery')
+            ->toArray();
+
+        $data['nursery'] = $nurseries;
+
+        return response()->json(['status' => 200, 'data' => $data], 200);
     }
 
     public function getPlantsPdf(Request $request)
@@ -1115,7 +1127,6 @@ class ReportsController extends Controller
             $data = ['url' => $url];
 
             return response()->json(['status' => 200, 'data' => $data], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 500,
