@@ -27,12 +27,13 @@
                     <td>{{ $item->type == 1 ? 'Salaried' : 'On demand' }}</td>
                     <td>{{ $item->role }}</td>
                     <td>
-                @if ($item->is_leader == 1)
-                    <a href="{{ route('staff.teams', $item->id) }}"> {{ $item->name }} </a>
-                @else
-                    {{ $item->name }}
-                @endif
-            </td>
+                        @if ($item->is_leader == 1)
+                            {{-- <a href="{{ route('staff.teams', $item->id) }}"> {{ $item->name }} </a> --}}
+                            {{ $item->name }}
+                        @else
+                            {{ $item->name }}
+                        @endif
+                    </td>
                     {{-- <td>
                         {{ $item->name }}
                     </td> --}}
