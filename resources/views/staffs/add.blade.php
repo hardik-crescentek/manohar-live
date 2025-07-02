@@ -342,7 +342,7 @@
         $('.staff_leader').change(function() {
             var staffType = $(this).val();
             if (staffType == "1") {
-                $('.team-detail').removeClass('d-none');
+                // $('.team-detail').removeClass('d-none');
             } else {
                 $('.team-detail').addClass('d-none');
             }
