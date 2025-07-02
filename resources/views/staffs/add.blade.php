@@ -149,7 +149,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row team-detail d-none" id="team-row-0">
+                        <div class="row team-detail-list d-none" id="team-row-0">
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label class="">Staff Name <span class="text-danger">*</span> </label>
@@ -342,7 +342,7 @@
         $('.staff_leader').change(function() {
             var staffType = $(this).val();
             if (staffType == "1") {
-                // $('.team-detail').removeClass('d-none');
+                $('.team-detail').removeClass('d-none');
             } else {
                 $('.team-detail').addClass('d-none');
             }
